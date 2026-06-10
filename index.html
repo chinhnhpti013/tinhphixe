@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" data-theme="dark">
+<html lang="vi" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,47 +7,55 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ===== TOKENS ===== */
+/* ===== TOKENS — Soft Sky Glass ===== */
 :root {
-  --bg: #080c14;
-  --surface: #0d1525;
-  --surface2: #111d30;
-  --surface3: #172338;
-  --border: rgba(99,155,255,0.12);
-  --border-strong: rgba(99,155,255,0.25);
-  --text: #e8f0ff;
-  --text-muted: #607090;
-  --text-dim: #3a4d6a;
-  --primary: #4d9fff;
-  --primary-glow: rgba(77,159,255,0.25);
-  --accent: #00e5b4;
-  --accent-glow: rgba(0,229,180,0.2);
+  --bg: #0b1626;
+  --surface: #111f36;
+  --surface2: #172842;
+  --surface3: #1e3251;
+  --border: rgba(120,175,255,0.14);
+  --border-strong: rgba(120,175,255,0.30);
+  --text: #eaf3ff;
+  --text-muted: #7e95ba;
+  --text-dim: #485e80;
+  --primary: #5da9f6;
+  --primary-glow: rgba(93,169,246,0.28);
+  --accent: #35d3b6;
+  --accent-glow: rgba(53,211,182,0.22);
   --warn: #ffb347;
   --danger: #ff5c7a;
-  --success: #00e5b4;
+  --success: #35d3b6;
   --gold: #ffd700;
-  --font: 'Sora', sans-serif;
+  --font: 'Be Vietnam Pro', sans-serif;
   --mono: 'JetBrains Mono', monospace;
-  --r: 12px;
-  --r-sm: 7px;
+  --r: 16px;
+  --r-sm: 10px;
+  --wave-a: rgba(93,169,246,0.13);
+  --wave-b: rgba(53,211,182,0.09);
+  --wave-c: rgba(150,190,255,0.10);
+  --card-shadow: 0 8px 30px rgba(0,0,0,0.25);
 }
 
 [data-theme="light"] {
-  --bg: #f0f4fb;
-  --surface: #ffffff;
-  --surface2: #f5f8ff;
-  --surface3: #eaf0fc;
-  --border: rgba(60,100,200,0.12);
-  --border-strong: rgba(60,100,200,0.25);
-  --text: #0d1525;
-  --text-muted: #4a6080;
-  --text-dim: #8090b0;
-  --primary: #1a6fe8;
-  --primary-glow: rgba(26,111,232,0.15);
-  --accent: #00b894;
-  --accent-glow: rgba(0,184,148,0.15);
+  --bg: #e8f2fc;
+  --surface: rgba(255,255,255,0.86);
+  --surface2: #f1f8fe;
+  --surface3: #e2eefb;
+  --border: rgba(70,130,210,0.16);
+  --border-strong: rgba(70,130,210,0.34);
+  --text: #14365c;
+  --text-muted: #51719a;
+  --text-dim: #8aa6c6;
+  --primary: #2e7fd6;
+  --primary-glow: rgba(46,127,214,0.18);
+  --accent: #0fb89b;
+  --accent-glow: rgba(15,184,155,0.16);
+  --wave-a: rgba(125,190,250,0.50);
+  --wave-b: rgba(110,225,205,0.32);
+  --wave-c: rgba(165,200,255,0.42);
+  --card-shadow: 0 10px 36px rgba(70,130,210,0.10);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,16 +66,22 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  font-size: 13px;
+  font-size: 20px;
   line-height: 1.6;
   overflow-x: hidden;
 }
 
+/* Sóng gradient đổi màu — 2 lớp trôi chậm, mềm mại */
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  inset: -28%;
+  background:
+    radial-gradient(42% 38% at 18% 28%, var(--wave-a), transparent 70%),
+    radial-gradient(36% 42% at 82% 16%, var(--wave-c), transparent 70%),
+    radial-gradient(46% 40% at 68% 86%, var(--wave-b), transparent 70%);
+  filter: blur(60px) saturate(112%) hue-rotate(0deg);
+  animation: waveDrift 26s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
 }
@@ -75,13 +89,27 @@ body::before {
 body::after {
   content: '';
   position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(77,159,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(77,159,255,0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+  inset: -28%;
+  background:
+    radial-gradient(38% 44% at 78% 60%, var(--wave-a), transparent 72%),
+    radial-gradient(42% 36% at 22% 80%, var(--wave-b), transparent 72%);
+  filter: blur(85px);
+  animation: waveDrift2 36s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
+}
+
+@keyframes waveDrift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1);    filter: blur(60px) saturate(112%) hue-rotate(0deg); }
+  50%  { filter: blur(60px) saturate(118%) hue-rotate(18deg); }
+  to   { transform: translate3d(4%, 4%, 0) scale(1.12);   filter: blur(60px) saturate(112%) hue-rotate(-14deg); }
+}
+@keyframes waveDrift2 {
+  from { transform: translate3d(3%, 3%, 0) rotate(0deg); }
+  to   { transform: translate3d(-4%, -4%, 0) rotate(5deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
 }
 
 * { position: relative; z-index: 1; }
@@ -91,7 +119,7 @@ body::after {
   background: linear-gradient(135deg, #060e1e 0%, #0a1628 50%, #060e1e 100%);
   border-bottom: 1px solid var(--border);
   padding: 0 16px;
-  height: 56px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -118,18 +146,18 @@ body::after {
 .logo { display: flex; align-items: center; gap: 10px; }
 
 .logo-mark {
-  width: 32px; height: 32px;
+  width: 48px; height: 48px;
   background: linear-gradient(135deg, var(--primary), var(--accent));
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px;
+  font-size: 23px;
   box-shadow: 0 0 16px var(--primary-glow);
 }
 
 .logo-text { line-height: 1.2; }
-.logo-text h1 { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
 .logo-text h1 span { color: var(--primary); }
-.logo-text p { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+.logo-text p { font-size: 14px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
 
 .header-right { display: flex; align-items: center; gap: 6px; }
 
@@ -139,12 +167,12 @@ body::after {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 7px 13px;
+  padding: 11px 18px;
   border-radius: var(--r-sm);
   border: none;
   font-family: var(--font);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 18px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
   white-space: nowrap;
@@ -182,19 +210,19 @@ body::after {
 }
 .btn-danger-soft:hover { background: rgba(255,92,122,0.2); }
 
-.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
-.btn-lg { padding: 12px 24px; font-size: 14px; border-radius: 10px; }
+.btn-sm { padding: 8px 14px; font-size: 17px; border-radius: 6px; }
+.btn-lg { padding: 16px 30px; font-size: 21px; border-radius: 10px; }
 .btn-full { width: 100%; }
-.btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 7px; font-size: 14px; }
+.btn-icon { width: 46px; height: 46px; padding: 0; border-radius: 7px; font-size: 21px; }
 
 /* ===== LAYOUT ===== */
 .app-shell {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr 560px;
   gap: 0;
-  max-width: 1400px;
+  max-width: 1860px;
   margin: 0 auto;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 80px);
 }
 
 .left-panel {
@@ -206,8 +234,8 @@ body::after {
 .right-panel {
   padding: 16px;
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 80px;
+  height: calc(100vh - 80px);
   overflow-y: auto;
 }
 
@@ -235,7 +263,7 @@ body::after {
   border-radius: 7px;
   color: var(--text-muted);
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -253,8 +281,10 @@ body::after {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 14px;
-  margin-bottom: 10px;
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(14px);
 }
 
 .card-header {
@@ -267,10 +297,10 @@ body::after {
 }
 
 .card-icon {
-  width: 28px; height: 28px;
+  width: 40px; height: 40px;
   border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
@@ -279,8 +309,8 @@ body::after {
 .ci-purple { background: rgba(155,100,255,0.12); }
 .ci-orange { background: rgba(255,179,71,0.12); }
 
-.card-title { font-size: 13px; font-weight: 700; }
-.card-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.card-title { font-size: 20px; font-weight: 700; }
+.card-sub { font-size: 15px; color: var(--text-muted); margin-top: 1px; }
 
 /* ===== COMPACT FORM ===== */
 .form-grid {
@@ -298,8 +328,23 @@ body::after {
 
 .fgroup { display: flex; flex-direction: column; gap: 3px; }
 
+/* ===== DUO GRID — Thông tin xe ½ + Tra cứu giá ½ ===== */
+.duo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+.duo-grid .card { margin-bottom: 0; height: 100%; }
+
+@media (max-width: 900px) {
+  .duo-grid { grid-template-columns: 1fr; }
+  .duo-grid .card { height: auto; }
+}
+
 label {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-muted);
   letter-spacing: 0.8px;
@@ -315,9 +360,9 @@ select {
   border: 1px solid var(--border);
   border-radius: 7px;
   color: var(--text);
-  padding: 5px 9px;
+  padding: 10px 14px;
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 17px;
   transition: all 0.2s;
   width: 100%;
   appearance: none;
@@ -331,7 +376,7 @@ input:focus, select:focus {
 }
 
 input.has-error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(255,92,122,0.15); }
-.err { font-size: 10px; color: var(--danger); margin-top: 1px; min-height: 12px; }
+.err { font-size: 15px; color: var(--danger); margin-top: 1px; min-height: 12px; }
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -356,9 +401,9 @@ select option { background: var(--surface2); }
   background: rgba(77,159,255,0.06);
 }
 
-.ocr-zone .ocr-icon { font-size: 20px; margin-bottom: 6px; }
-.ocr-zone .ocr-title { font-size: 11px; font-weight: 700; color: var(--text); }
-.ocr-zone .ocr-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.ocr-zone .ocr-icon { font-size: 30px; margin-bottom: 6px; }
+.ocr-zone .ocr-title { font-size: 17px; font-weight: 700; color: var(--text); }
+.ocr-zone .ocr-sub { font-size: 15px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
 .ocr-zone .ocr-btns { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
 
 .ocr-progress-wrap {
@@ -372,7 +417,7 @@ select option { background: var(--surface2); }
 
 .ocr-progress-wrap.show { display: block; }
 
-.ocr-progress-label { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.ocr-progress-label { font-size: 15px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
 .ocr-progress-bar-bg { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
 .ocr-progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 2px; transition: width 0.3s; width: 0%; }
 
@@ -389,7 +434,7 @@ select option { background: var(--surface2); }
   gap: 4px;
   padding: 2px 8px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -410,7 +455,7 @@ select option { background: var(--surface2); }
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--primary);
   letter-spacing: 1.2px;
@@ -442,7 +487,7 @@ select option { background: var(--surface2); }
 .toggle-row:hover { border-color: var(--border-strong); }
 
 .toggle-switch {
-  width: 32px; height: 18px;
+  width: 48px; height: 26px;
   background: var(--surface3);
   border-radius: 9px;
   position: relative;
@@ -454,23 +499,27 @@ select option { background: var(--surface2); }
 .toggle-switch.on { background: linear-gradient(135deg, var(--primary), #2d7fe0); border-color: var(--primary); }
 
 .toggle-thumb {
-  width: 12px; height: 12px;
+  width: 18px; height: 18px;
   background: #fff;
   border-radius: 50%;
   position: absolute;
-  top: 2px; left: 2px;
+  top: 3px; left: 3px;
   transition: left 0.25s cubic-bezier(0.4,0,0.2,1);
   box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-.toggle-switch.on .toggle-thumb { left: 16px; }
-.toggle-label { font-size: 12px; font-weight: 600; }
+.toggle-switch.on .toggle-thumb { left: 26px; }
+.toggle-label { font-size: 18px; font-weight: 600; }
 
-/* ===== BS CLAUSE CARDS — ONE LINE ===== */
+/* ===== BS CLAUSE CARDS — 2 CỘT ===== */
 .bs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+@media (max-width: 720px) {
+  .bs-list { grid-template-columns: 1fr; }
 }
 
 .bs-card {
@@ -484,7 +533,7 @@ select option { background: var(--surface2); }
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
-  min-height: 34px;
+  min-height: 50px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 
@@ -501,7 +550,7 @@ select option { background: var(--surface2); }
 }
 
 .bs-code {
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--primary);
   font-family: var(--mono);
@@ -512,7 +561,7 @@ select option { background: var(--surface2); }
 }
 
 .bs-name {
-  font-size: 11px;
+  font-size: 17px;
   font-weight: 500;
   color: var(--text);
   flex: 1;
@@ -522,7 +571,7 @@ select option { background: var(--surface2); }
 }
 
 .bs-rate {
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--accent);
   font-family: var(--mono);
@@ -545,7 +594,7 @@ select option { background: var(--surface2); }
 }
 
 .price-lookup-trigger:hover { background: rgba(0,229,180,0.12); border-color: var(--accent); }
-.price-lookup-trigger span { font-size: 11px; font-weight: 600; color: var(--accent); }
+.price-lookup-trigger span { font-size: 17px; font-weight: 600; color: var(--accent); }
 
 /* ===== MODAL ===== */
 .modal-overlay {
@@ -606,10 +655,10 @@ select option { background: var(--surface2); }
 }
 
 .lookup-source:hover { border-color: var(--primary); background: var(--surface3); }
-.lookup-source .ls-icon { font-size: 16px; }
-.lookup-source .ls-name { font-size: 12px; font-weight: 600; }
-.lookup-source .ls-url { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
-.lookup-source .ls-arrow { margin-left: auto; color: var(--text-dim); font-size: 11px; }
+.lookup-source .ls-icon { font-size: 24px; }
+.lookup-source .ls-name { font-size: 18px; font-weight: 600; }
+.lookup-source .ls-url { font-size: 15px; color: var(--text-muted); font-family: var(--mono); }
+.lookup-source .ls-arrow { margin-left: auto; color: var(--text-dim); font-size: 17px; }
 
 .market-price-input {
   margin-top: 14px;
@@ -643,9 +692,9 @@ select option { background: var(--surface2); }
   pointer-events: none;
 }
 
-.rh-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.rh-label { font-size: 14px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 .rh-value {
-  font-size: 30px;
+  font-size: 45px;
   font-weight: 800;
   background: linear-gradient(135deg, var(--primary), var(--accent));
   -webkit-background-clip: text;
@@ -656,7 +705,7 @@ select option { background: var(--surface2); }
   margin: 4px 0;
   font-family: var(--mono);
 }
-.rh-note { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+.rh-note { font-size: 15px; color: var(--text-muted); margin-top: 3px; }
 
 /* ===== STAT GRID ===== */
 .stat-grid {
@@ -674,11 +723,11 @@ select option { background: var(--surface2); }
   text-align: center;
 }
 
-.stat-val { font-size: 16px; font-weight: 800; font-family: var(--mono); }
+.stat-val { font-size: 24px; font-weight: 800; font-family: var(--mono); }
 .stat-val.blue { color: var(--primary); }
 .stat-val.green { color: var(--accent); }
 .stat-val.orange { color: var(--warn); }
-.stat-lab { font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+.stat-lab { font-size: 14px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
 
 /* ===== BREAKDOWN ===== */
 .bd-item {
@@ -688,7 +737,7 @@ select option { background: var(--surface2); }
   padding: 6px 9px;
   border-radius: 7px;
   margin-bottom: 3px;
-  font-size: 11.5px;
+  font-size: 17px;
   transition: background 0.15s;
 }
 
@@ -706,19 +755,19 @@ select option { background: var(--surface2); }
 .bd-val.pos { color: var(--danger); }
 .bd-val.neg { color: var(--accent); }
 .bd-val.neutral { color: var(--text); }
-.bd-val.big { font-size: 13px; color: var(--primary); }
+.bd-val.big { font-size: 20px; color: var(--primary); }
 
 .divider { height: 1px; background: var(--border); margin: 8px 0; }
 
 /* ===== HISTORY TABLE ===== */
-.hist-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.hist-table { width: 100%; border-collapse: collapse; font-size: 17px; }
 .hist-table th {
   background: var(--surface2);
   color: var(--text-muted);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  font-size: 9px;
+  font-size: 14px;
   padding: 7px 9px;
   text-align: left;
   border-bottom: 1px solid var(--border);
@@ -752,7 +801,7 @@ select option { background: var(--surface2); }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-screen p { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.loading-screen p { font-size: 20px; font-weight: 600; color: var(--text-muted); }
 
 /* ===== FLOOR CONFIG ===== */
 .floor-row {
@@ -765,8 +814,8 @@ select option { background: var(--surface2); }
   border-radius: 8px;
 }
 
-.floor-row label { font-size: 11px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
-.floor-row input { width: 70px; text-align: center; }
+.floor-row label { font-size: 17px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.floor-row input { width: 110px; text-align: center; }
 
 /* ===== ALERTS ===== */
 .alert {
@@ -775,7 +824,7 @@ select option { background: var(--surface2); }
   gap: 7px;
   padding: 8px 11px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 17px;
   margin-bottom: 8px;
 }
 
@@ -793,14 +842,14 @@ select option { background: var(--surface2); }
   border-left: 2px solid var(--primary);
 }
 
-.vinfo-lab { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.vinfo-val { font-size: 12px; font-weight: 600; margin-top: 2px; }
+.vinfo-lab { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.vinfo-val { font-size: 18px; font-weight: 600; margin-top: 2px; }
 
 /* ===== EMPTY STATE ===== */
 .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
-.empty h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
-.empty p { font-size: 12px; line-height: 1.6; }
+.empty-icon { font-size: 60px; margin-bottom: 12px; opacity: 0.6; }
+.empty h3 { font-size: 23px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+.empty p { font-size: 18px; line-height: 1.6; }
 
 /* ===== ANIMATIONS ===== */
 @keyframes fadeInUp {
@@ -831,7 +880,7 @@ select option { background: var(--surface2); }
   gap: 3px;
   padding: 2px 7px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
 }
 .badge-blue { background: rgba(77,159,255,0.12); color: var(--primary); }
@@ -867,7 +916,7 @@ select option { background: var(--surface2); }
   gap: 8px;
   padding: 10px 18px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text);
   background: var(--surface2);
@@ -918,8 +967,8 @@ select option { background: var(--surface2); }
   <div class="modal">
     <div class="modal-header">
       <div>
-        <div style="font-size:15px;font-weight:800" id="modalCarName">Tra cứu giá xe</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Tra cứu giá thị trường trên các trang mua bán xe Việt Nam</div>
+        <div style="font-size: 23px;font-weight:800" id="modalCarName">Tra cứu giá xe</div>
+        <div style="font-size: 17px;color:var(--text-muted);margin-top:2px">Tra cứu giá thị trường trên các trang mua bán xe Việt Nam</div>
       </div>
       <button class="btn btn-ghost btn-icon" onclick="closePriceModal()">✕</button>
     </div>
@@ -929,7 +978,7 @@ select option { background: var(--surface2); }
       </div>
       <div id="lookupSources"></div>
       <div class="market-price-input">
-        <label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text);font-weight:700;display:block;margin-bottom:7px">
+        <label style="text-transform:none;letter-spacing:0;font-size: 18px;color:var(--text);font-weight:700;display:block;margin-bottom:7px">
           💰 Nhập giá thị trường sau khi tra cứu
         </label>
         <div style="display:flex;gap:7px;align-items:flex-end">
@@ -939,7 +988,7 @@ select option { background: var(--surface2); }
           </div>
           <button class="btn btn-accent" onclick="useMarketPrice()">Dùng giá này →</button>
         </div>
-        <div style="margin-top:6px;font-size:10px;color:var(--text-muted)" id="marketPriceDisplay"></div>
+        <div style="margin-top:6px;font-size: 15px;color:var(--text-muted)" id="marketPriceDisplay"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -979,112 +1028,126 @@ select option { background: var(--surface2); }
     <!-- ===== TAB CALC ===== -->
     <div id="tab-calc">
 
-      <!-- CARD: THÔNG TIN XE -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon ci-blue">🚗</div>
-          <div style="flex:1">
-            <div class="card-title">Thông tin xe từ giấy tờ</div>
-            <div class="card-sub">Tải ảnh đăng ký / đăng kiểm hoặc dán từ clipboard</div>
+      <!-- DUO: THÔNG TIN XE (1/2) + TRA CỨU GIÁ (1/2) -->
+      <div class="duo-grid">
+
+        <!-- CARD: THÔNG TIN XE -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-blue">🚗</div>
+            <div style="flex:1">
+              <div class="card-title">Thông tin xe từ giấy tờ</div>
+              <div class="card-sub">Tải ảnh đăng ký / đăng kiểm hoặc dán từ clipboard</div>
+            </div>
+          </div>
+
+          <!-- OCR UPLOAD ZONE -->
+          <div class="ocr-zone" id="ocrZone"
+            onclick="document.getElementById('ocrFileInput').click()"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)">
+            <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+            <div class="ocr-icon">📷</div>
+            <div class="ocr-title">Kéo thả nhiều ảnh giấy tờ xe vào đây</div>
+            <div id="ocrZoneSub" class="ocr-sub">Chọn nhiều file cùng lúc hoặc kéo thả đồng thời · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> để dán từ clipboard</div>
+            <div class="ocr-btns" onclick="event.stopPropagation()">
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
+            </div>
+          </div>
+          <!-- PREVIEW STRIP -->
+          <div id="ocrPreviewStrip" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+
+          <!-- OCR PROGRESS -->
+          <div class="ocr-progress-wrap" id="ocrProgressWrap">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+              <div class="ocr-progress-label" id="ocrProgressLabel">Đang nhận dạng văn bản...</div>
+              <div id="ocrProgressPct" style="font-size: 15px;font-weight:700;color:var(--primary);font-family:var(--mono)">0%</div>
+            </div>
+            <div class="ocr-progress-bar-bg">
+              <div class="ocr-progress-bar" id="ocrProgressBar"></div>
+            </div>
+            <div class="ocr-result-tags" id="ocrResultTags"></div>
+          </div>
+
+          <!-- HIDDEN INPUTS — dùng cho tính toán, không hiển thị -->
+          <div style="display:none">
+            <input type="text"   id="f_plate"   maxlength="15">
+            <input type="text"   id="f_owner">
+            <input type="text"   id="f_addr">
+            <input type="text"   id="f_brand"   oninput="checkPriceLookup()">
+            <input type="text"   id="f_model"   oninput="onModelInput()">
+            <input type="text"   id="f_version">
+            <input type="text"   id="f_chassis">
+            <input type="text"   id="f_engine">
+            <input type="number" id="f_year"    oninput="checkPriceLookup()">
+            <input type="number" id="f_seats">
+            <input type="text"   id="f_country">
+            <input type="checkbox" id="f_transport">
+            <div class="err" id="err_year"></div>
+            <span id="versionBadge"></span>
+          </div>
+
+          <!-- BẢNG THÔNG TIN XE — hiển thị sau OCR, có thể chỉnh sửa -->
+          <div id="vehicleInfoTable" style="display:none;margin-top:4px">
+            <table style="width:100%;border-collapse:collapse" id="vitTable">
+              <!-- rows được render bởi renderVehicleTable() -->
+            </table>
+            <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span style="font-size: 14px;color:var(--text-muted)">✏️ Click vào giá trị để chỉnh sửa</span>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size: 17px;font-weight:600;margin-left:auto">
+                <input type="checkbox" id="f_transport_vis" style="width:18px;height:18px;accent-color:var(--warn)" onchange="syncTransport(this)">
+                <span id="f_transport_label" style="color:var(--text-muted)">Kinh doanh vận tải</span>
+              </label>
+            </div>
           </div>
         </div>
 
-        <!-- API KEY SETUP -->
-        <div id="apiKeySetup" style="display:none;margin-bottom:10px;padding:10px 12px;background:rgba(77,159,255,0.07);border:1px solid rgba(77,159,255,0.2);border-radius:10px">
-          <div style="font-size:10px;font-weight:700;color:var(--primary);margin-bottom:6px">🔑 ANTHROPIC API KEY — Nhận dạng bằng Claude Vision (chính xác hơn Tesseract)</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex:1;font-size:11px;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono)">
-            <button class="btn btn-primary btn-sm" onclick="saveApiKey()" style="white-space:nowrap">Lưu key</button>
+        <!-- CARD: TRA CỨU GIÁ TRỊ XE -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-green">💹</div>
+            <div style="flex:1">
+              <div class="card-title">Tra cứu giá trị xe</div>
+              <div class="card-sub">Giá thị trường tự điền vào Số tiền bảo hiểm</div>
+            </div>
           </div>
-          <div style="font-size:9px;color:var(--text-muted);margin-top:4px">Key lưu trong localStorage, không gửi lên máy chủ. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--primary)">Lấy key tại đây →</a></div>
-        </div>
 
-        <!-- OCR UPLOAD ZONE -->
-        <div class="ocr-zone" id="ocrZone"
-          onclick="document.getElementById('ocrFileInput').click()"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)">
-          <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
-          <div class="ocr-icon">📷</div>
-          <div class="ocr-title">Kéo thả nhiều ảnh giấy tờ xe vào đây</div>
-          <div id="ocrZoneSub" class="ocr-sub">Chọn nhiều file cùng lúc hoặc kéo thả đồng thời · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> để dán từ clipboard</div>
-          <div class="ocr-btns" onclick="event.stopPropagation()">
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
-            <button class="btn btn-ghost btn-sm" id="btnSetupKey" onclick="event.stopPropagation();toggleApiKeySetup()" style="font-size:10px">🔑 API Key</button>
+          <!-- NÚT TRA GIÁ TRỊ XE -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" id="btnTraGia" onclick="traGiaTriXe()" style="flex:1;min-width:200px">
+              💹 Tra giá trị xe thị trường
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="openPriceModal()" style="flex-shrink:0" id="btnTraThuCong">Tra thủ công →</button>
           </div>
-        </div>
-        <!-- PREVIEW STRIP -->
-        <div id="ocrPreviewStrip" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
 
-        <!-- OCR PROGRESS -->
-        <div class="ocr-progress-wrap" id="ocrProgressWrap">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-            <div class="ocr-progress-label" id="ocrProgressLabel">Đang nhận dạng văn bản...</div>
-            <div id="ocrProgressPct" style="font-size:10px;font-weight:700;color:var(--primary);font-family:var(--mono)">0%</div>
+          <!-- AUTO PRICE STATUS -->
+          <div id="autoPriceStatus" style="display:none;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 13px;background:rgba(0,229,180,0.06);border:1px solid rgba(0,229,180,0.2);border-radius:10px">
+              <span id="autoPriceIcon">⏳</span>
+              <span id="autoPriceLabel" style="font-size: 16px;font-weight:600;color:var(--accent);flex:1">Đang tìm giá thị trường...</span>
+            </div>
           </div>
-          <div class="ocr-progress-bar-bg">
-            <div class="ocr-progress-bar" id="ocrProgressBar"></div>
+
+          <!-- DỮ LIỆU TRA CỨU — kết quả chi tiết hiển thị tại đây -->
+          <div id="priceDataPanel" style="margin-top:10px">
+            <div style="text-align:center;padding:24px 12px;color:var(--text-dim)">
+              <div style="font-size: 36px;margin-bottom:8px;opacity:0.6">💹</div>
+              <div style="font-size: 16px;line-height:1.6">Chưa có dữ liệu tra cứu.<br>OCR giấy tờ xe hoặc nhấn nút phía trên để tra giá thị trường.</div>
+            </div>
           </div>
-          <div class="ocr-result-tags" id="ocrResultTags"></div>
-        </div>
 
-        <!-- HIDDEN INPUTS — dùng cho tính toán, không hiển thị -->
-        <div style="display:none">
-          <input type="text"   id="f_plate"   maxlength="15">
-          <input type="text"   id="f_owner">
-          <input type="text"   id="f_addr">
-          <input type="text"   id="f_brand"   oninput="checkPriceLookup()">
-          <input type="text"   id="f_model"   oninput="onModelInput()">
-          <input type="text"   id="f_version">
-          <input type="text"   id="f_chassis">
-          <input type="text"   id="f_engine">
-          <input type="number" id="f_year"    oninput="checkPriceLookup()">
-          <input type="number" id="f_seats">
-          <input type="text"   id="f_country">
-          <input type="checkbox" id="f_transport">
-          <div class="err" id="err_year"></div>
-          <span id="versionBadge"></span>
-        </div>
-
-        <!-- BẢNG THÔNG TIN XE — hiển thị sau OCR, có thể chỉnh sửa -->
-        <div id="vehicleInfoTable" style="display:none;margin-top:4px">
-          <table style="width:100%;border-collapse:collapse" id="vitTable">
-            <!-- rows được render bởi renderVehicleTable() -->
-          </table>
-          <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:9px;color:var(--text-muted)">✏️ Click vào giá trị để chỉnh sửa</span>
-            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:600;margin-left:auto">
-              <input type="checkbox" id="f_transport_vis" style="width:14px;height:14px;accent-color:var(--warn)" onchange="syncTransport(this)">
-              <span id="f_transport_label" style="color:var(--text-muted)">Kinh doanh vận tải</span>
-            </label>
+          <!-- PRICE LOOKUP TRIGGER (manual fallback, hidden — kept for compatibility) -->
+          <div id="priceLookupTrigger" style="display:none">
+            <div class="price-lookup-trigger" onclick="openPriceModal()">
+              <span>🔍</span>
+              <span id="priceLookupLabel">Tra cứu giá xe thị trường</span>
+              <span style="margin-left:auto;font-size: 15px;color:var(--text-muted)">→</span>
+            </div>
           </div>
         </div>
 
-        <!-- NÚT TRA GIÁ TRỊ XE -->
-        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary" id="btnTraGia" onclick="traGiaTriXe()" style="flex:1;min-width:160px">
-            💹 Tra giá trị xe thị trường
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="openPriceModal()" style="flex-shrink:0" id="btnTraThuCong">Tra thủ công →</button>
-        </div>
-
-        <!-- AUTO PRICE STATUS -->
-        <div id="autoPriceStatus" style="display:none;margin-top:8px">
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(0,229,180,0.06);border:1px solid rgba(0,229,180,0.2);border-radius:8px">
-            <span id="autoPriceIcon">⏳</span>
-            <span id="autoPriceLabel" style="font-size:11px;font-weight:600;color:var(--accent);flex:1">Đang tìm giá thị trường...</span>
-          </div>
-        </div>
-        <!-- PRICE LOOKUP TRIGGER (manual fallback, hidden — kept for compatibility) -->
-        <div id="priceLookupTrigger" style="display:none">
-          <div class="price-lookup-trigger" onclick="openPriceModal()">
-            <span>🔍</span>
-            <span id="priceLookupLabel">Tra cứu giá xe thị trường</span>
-            <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">→</span>
-          </div>
-        </div>
-      </div>
+      </div><!-- /duo-grid -->
 
       <!-- CARD: THÔNG TIN BẢO HIỂM -->
       <div class="card">
@@ -1120,7 +1183,7 @@ select option { background: var(--surface2); }
           </div>
         </div>
 
-        <div class="form-grid" style="margin-top:8px">
+        <div class="form-grid g3" style="margin-top:8px">
           <div class="fgroup">
             <label>Số tiền bảo hiểm (VNĐ) <span class="req">*</span></label>
             <input type="number" id="f_value" placeholder="850000000" min="1000000" oninput="updateValueFmt()">
@@ -1190,9 +1253,9 @@ select option { background: var(--surface2); }
         <!-- PHÍ SÀN -->
         <div class="sec-label">⚙️ Phí sàn</div>
         <div class="floor-row">
-          <label style="white-space:nowrap;font-size:11px">Hệ số sàn:</label>
+          <label style="white-space:nowrap;font-size: 17px">Hệ số sàn:</label>
           <input type="number" id="f_floor" value="0.70" min="0.1" max="1" step="0.01">
-          <span style="font-size:10px;color:var(--text-muted)">(mặc định 0.70)</span>
+          <span style="font-size: 15px;color:var(--text-muted)">(mặc định 0.70)</span>
         </div>
       </div>
 
@@ -1204,7 +1267,7 @@ select option { background: var(--surface2); }
             <div class="card-title">Điều khoản bổ sung</div>
             <div class="card-sub">Nhấn để chọn / bỏ chọn từng điều khoản</div>
           </div>
-          <span id="bsCountBadge" style="font-size:10px;color:var(--text-muted)">0 đã chọn</span>
+          <span id="bsCountBadge" style="font-size: 15px;color:var(--text-muted)">0 đã chọn</span>
         </div>
         <div class="bs-list" id="bsList"></div>
       </div>
@@ -1241,7 +1304,7 @@ select option { background: var(--surface2); }
         </div>
 
         <div class="sec-label">A. Phí bảo hiểm gốc</div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.7">
+        <p style="font-size: 18px;color:var(--text-muted);margin-bottom:10px;line-height:1.7">
           Phí = (Tỷ lệ phí cơ bản + Tổng tỷ lệ BS) × Số tiền bảo hiểm<br>
           Tỷ lệ cơ bản được tra theo <strong>Loại xe × Nhóm tuổi xe × Mức giá trị xe</strong>.
         </p>
@@ -1260,7 +1323,7 @@ select option { background: var(--surface2); }
         </div>
 
         <div class="sec-label">C. Phí sàn</div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+        <p style="font-size: 18px;color:var(--text-muted);margin-bottom:10px">
           Phí sàn = Hệ số sàn × Phí lần đầu. Phí cuối <strong>không được</strong> thấp hơn phí sàn.
         </p>
 
@@ -1578,29 +1641,28 @@ function saveApiKey() {
     return;
   }
   localStorage.setItem('pti_anthropic_key', key);
-  $('apiKeySetup').style.display = 'none';
+  const panel = $('apiKeySetup');
+  if (panel) panel.style.display = 'none';
   updateOcrZoneBadge();
   toast('Đã lưu API key — OCR sẽ dùng Claude Vision');
 }
 
+// UI nhập key đã bỏ từ v1.4.0 — key (nếu muốn) đặt thủ công qua DevTools:
+// localStorage.setItem('pti_anthropic_key', 'sk-ant-...')
 function toggleApiKeySetup() {
   const panel = $('apiKeySetup');
+  if (!panel) return;
   const show = panel.style.display === 'none';
   panel.style.display = show ? 'block' : 'none';
-  if (show) {
-    const key = getApiKey();
-    if (key) $('apiKeyInput').value = key;
-    $('apiKeyInput').focus();
-  }
 }
 
 function updateOcrZoneBadge() {
   const sub = $('ocrZoneSub');
   if (!sub) return;
   if (getApiKey()) {
-    sub.innerHTML = '✨ <strong style="color:var(--accent)">Claude Vision đang hoạt động</strong> — nhận dạng chính xác tiếng Việt · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> dán từ clipboard';
+    sub.innerHTML = '✨ <strong style="color:var(--accent)">Claude Vision đang hoạt động</strong> — nhận dạng chính xác tiếng Việt · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> dán từ clipboard';
   } else {
-    sub.innerHTML = '🧠 <strong style="color:var(--primary)">OCR thông minh 2 lượt</strong> — chạy ngay trên máy, không cần API key · tự sửa lỗi VIN, lọc nhiễu · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> dán từ clipboard';
+    sub.innerHTML = '🧠 <strong style="color:var(--primary)">OCR thông minh 2 lượt</strong> — chạy ngay trên máy, không cần API key · tự sửa lỗi VIN, lọc nhiễu · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> dán từ clipboard';
   }
 }
 
@@ -2357,10 +2419,10 @@ function renderVehicleTable() {
   tbody.innerHTML = VIT_FIELDS.map(f => {
     const val = $(f.id) ? $(f.id).value : '';
     return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px 8px 5px 0;color:var(--text-muted);font-size:10px;white-space:nowrap;width:40%;vertical-align:middle">${f.label}</td>
+      <td style="padding:5px 8px 5px 0;color:var(--text-muted);font-size: 15px;white-space:nowrap;width:40%;vertical-align:middle">${f.label}</td>
       <td style="padding:3px 0">
         <input type="text" value="${val.replace(/"/g,'&quot;')}"
-          style="width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--text);font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 4px;border-radius:3px;outline:none;cursor:default"
+          style="width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--text);font-size: 17px;font-family:var(--mono);font-weight:600;padding:2px 4px;border-radius:3px;outline:none;cursor:default"
           onfocus="this.style.borderBottomColor='var(--primary)';this.style.cursor='text';this.style.background='var(--surface2)'"
           onblur="this.style.borderBottomColor='transparent';this.style.cursor='default';this.style.background='transparent';syncVitField('${f.id}',this.value)"
           onchange="syncVitField('${f.id}',this.value)"
@@ -2449,7 +2511,6 @@ function resetOCRZone() {
     <div id="ocrZoneSub" class="ocr-sub"></div>
     <div class="ocr-btns" onclick="event.stopPropagation()">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
-      <button class="btn btn-ghost btn-sm" id="btnSetupKey" onclick="event.stopPropagation();toggleApiKeySetup()" style="font-size:10px">🔑 API Key</button>
     </div>
   `;
   updateOcrZoneBadge();
@@ -2702,7 +2763,8 @@ function showPriceResult(result, autoFill) {
     // LUÔN tự điền vào ô "Số tiền bảo hiểm" (khung Thông tin bảo hiểm)
     $('f_value').value = Math.round(result.price);
     updateValueFmt();
-    $('autoPriceLabel').innerHTML = `Đã điền vào Số tiền BH: <strong style="color:var(--primary)">${priceStr} ₫</strong> · ${result.count} xe · ${result.source} · Dao động: ${rangeStr} · <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);text-decoration:underline">Tra thủ công</a>`;
+    $('autoPriceLabel').innerHTML = `Đã điền vào Số tiền BH: <strong style="color:var(--primary)">${priceStr} ₫</strong>`;
+    renderPriceDataPanel(result);
     $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
     toast(`Đã điền giá thị trường ${priceStr} ₫ vào Số tiền bảo hiểm (${result.count} tin rao)`);
 
@@ -2710,9 +2772,50 @@ function showPriceResult(result, autoFill) {
   } else {
     $('autoPriceIcon').textContent = '🔍';
     $('autoPriceLabel').innerHTML = 'Không tìm được giá tự động — <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);text-decoration:underline">tra cứu thủ công →</a>';
+    renderPriceDataPanel(null);
     toast('Không tìm được giá tự động — hãy tra cứu thủ công', 'warn');
     checkPriceLookup();
   }
+}
+
+// Panel "Dữ liệu tra cứu" — nửa phải của duo-grid
+function renderPriceDataPanel(result) {
+  const panel = $('priceDataPanel');
+  if (!panel) return;
+  if (!result) {
+    panel.innerHTML = `
+      <div style="text-align:center;padding:20px 12px;color:var(--text-muted)">
+        <div style="font-size: 32px;margin-bottom:6px">🔍</div>
+        <div style="font-size: 16px;line-height:1.6">Không tìm thấy đủ tin rao phù hợp.<br>
+        Hãy <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);font-weight:600">tra cứu thủ công →</a></div>
+      </div>`;
+    return;
+  }
+  const priceStr = Math.round(result.price).toLocaleString('vi-VN');
+  panel.innerHTML = `
+    <div class="vinfo-item" style="border-left-color:var(--accent);margin-bottom:7px">
+      <div class="vinfo-lab">💰 Giá trung bình thị trường</div>
+      <div class="vinfo-val" style="color:var(--accent);font-size: 26px;font-family:var(--mono)">${priceStr} ₫</div>
+    </div>
+    <div class="vinfo-grid">
+      <div class="vinfo-item">
+        <div class="vinfo-lab">Số tin khảo sát</div>
+        <div class="vinfo-val">${result.count} tin rao</div>
+      </div>
+      <div class="vinfo-item">
+        <div class="vinfo-lab">Nguồn dữ liệu</div>
+        <div class="vinfo-val">${result.source}</div>
+      </div>
+      <div class="vinfo-item">
+        <div class="vinfo-lab">Dao động giá</div>
+        <div class="vinfo-val" style="font-family:var(--mono)">${Math.round(result.min/1e6)}–${Math.round(result.max/1e6)} triệu</div>
+      </div>
+      <div class="vinfo-item">
+        <div class="vinfo-lab">Từ khóa tìm kiếm</div>
+        <div class="vinfo-val">${result.query || '--'}</div>
+      </div>
+    </div>
+    <div style="font-size: 13px;color:var(--text-dim);margin-top:7px">Công thức: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu · lọc năm ±2</div>`;
 }
 
 function applyAutoPrice(price) {
@@ -2749,7 +2852,7 @@ function updateInfoTab() {
       ${Object.entries(fields).filter(([,v])=>v).map(([l,v])=>`
         <div class="vinfo-item">
           <div class="vinfo-lab">${l}</div>
-          <div class="vinfo-val" style="${l==='Biển số'?'color:var(--primary);font-size:15px':l==='Số khung'||l==='Số máy'?'font-family:var(--mono)':''}">${v}</div>
+          <div class="vinfo-val" style="${l==='Biển số'?'color:var(--primary);font-size: 23px':l==='Số khung'||l==='Số máy'?'font-family:var(--mono)':''}">${v}</div>
         </div>
       `).join('')}
     </div>
@@ -3099,7 +3202,7 @@ function _calc() {
     // BREAKDOWN
     let html = '';
     warns.forEach(w => {
-      html += `<div class="alert alert-warn" style="margin-bottom:7px;font-size:10.5px">⚠️ ${w}</div>`;
+      html += `<div class="alert alert-warn" style="margin-bottom:7px;font-size: 16px">⚠️ ${w}</div>`;
     });
     html += bdRow(`Tỷ lệ phí cơ bản (xe ${ageLabel}, ${V_LABELS[vi]})`, baseRate.toFixed(2) + '%', 'neutral');
     if (bsRate > 0) html += bdRow(`Điều khoản BS (${selectedBS.map(b=>b.c).join(',')})`, '+' + bsRate.toFixed(2) + '%', 'pos');
@@ -3119,15 +3222,15 @@ function _calc() {
     html += '<div class="divider"></div>';
     html += bdRow(`Phí sàn tối thiểu (hệ số ${floorCoef})`, fmt(floorFee), hitFloor ? 'pos' : 'neutral', hitFloor ? 'floor-hit' : '');
     if (hitFloor) {
-      html += `<div class="alert alert-warn" style="margin:7px 0;font-size:10px">⚠️ Phí tính được thấp hơn phí sàn. Áp dụng phí sàn tối thiểu.</div>`;
+      html += `<div class="alert alert-warn" style="margin:7px 0;font-size: 15px">⚠️ Phí tính được thấp hơn phí sàn. Áp dụng phí sàn tối thiểu.</div>`;
     }
     html += `<div class="bd-item final-row">
-      <span class="bd-label" style="font-weight:700;font-size:12px;color:var(--text)">💰 PHÍ BẢO HIỂM (chưa VAT)</span>
+      <span class="bd-label" style="font-weight:700;font-size: 18px;color:var(--text)">💰 PHÍ BẢO HIỂM (chưa VAT)</span>
       <span class="bd-val big">${fmt(finalFee)}</span>
     </div>`;
     html += bdRow('Thuế GTGT (VAT 10%)', '+' + fmt(vat), 'pos');
     html += `<div class="bd-item final-row" style="background:linear-gradient(135deg,rgba(0,229,180,0.14),rgba(77,159,255,0.08));border-color:rgba(0,229,180,0.35)">
-      <span class="bd-label" style="font-weight:700;font-size:12px;color:var(--text)">🧾 TỔNG THANH TOÁN (gồm VAT)</span>
+      <span class="bd-label" style="font-weight:700;font-size: 18px;color:var(--text)">🧾 TỔNG THANH TOÁN (gồm VAT)</span>
       <span class="bd-val big" style="color:var(--accent)">${fmt(feeWithVat)}</span>
     </div>`;
 
@@ -3145,11 +3248,11 @@ function _calc() {
         return `<div class="bd-item ${cur ? 'highlight' : ''}">
           <span class="bd-label">${cur ? '▶ ' : ''}Khấu trừ ${o.label}</span>
           <span style="display:flex;gap:10px;align-items:baseline">
-            <span style="font-size:9px;color:${cur ? 'var(--primary)' : 'var(--text-dim)'}">${diffStr}</span>
+            <span style="font-size: 14px;color:${cur ? 'var(--primary)' : 'var(--text-dim)'}">${diffStr}</span>
             <span class="bd-val ${cur ? 'big' : 'neutral'}">${fmt(fee)}</span>
           </span>
         </div>`;
-      }).join('') + `<div style="font-size:9px;color:var(--text-muted);margin-top:6px">So sánh phí (chưa VAT) khi đổi mức khấu trừ, mọi thông số khác giữ nguyên · đã áp phí sàn ${fmt(floorFee)}</div>`;
+      }).join('') + `<div style="font-size: 14px;color:var(--text-muted);margin-top:6px">So sánh phí (chưa VAT) khi đổi mức khấu trừ, mọi thông số khác giữ nguyên · đã áp phí sàn ${fmt(floorFee)}</div>`;
     }
 
     // SUMMARY
@@ -3291,7 +3394,7 @@ function toggleTheme() {
 (function init() {
   renderBS();
   renderHistory();
-  const t = localStorage.getItem('pti_theme') || 'dark';
+  const t = localStorage.getItem('pti_theme') || 'light';
   document.documentElement.setAttribute('data-theme', t);
   $('themeIcon').textContent = t === 'dark' ? '☀️' : '🌙';
   updateOcrZoneBadge();
