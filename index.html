@@ -1,0 +1,3306 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTI Insurance Calculator PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== TOKENS ===== */
+:root {
+  --bg: #080c14;
+  --surface: #0d1525;
+  --surface2: #111d30;
+  --surface3: #172338;
+  --border: rgba(99,155,255,0.12);
+  --border-strong: rgba(99,155,255,0.25);
+  --text: #e8f0ff;
+  --text-muted: #607090;
+  --text-dim: #3a4d6a;
+  --primary: #4d9fff;
+  --primary-glow: rgba(77,159,255,0.25);
+  --accent: #00e5b4;
+  --accent-glow: rgba(0,229,180,0.2);
+  --warn: #ffb347;
+  --danger: #ff5c7a;
+  --success: #00e5b4;
+  --gold: #ffd700;
+  --font: 'Sora', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r: 12px;
+  --r-sm: 7px;
+}
+
+[data-theme="light"] {
+  --bg: #f0f4fb;
+  --surface: #ffffff;
+  --surface2: #f5f8ff;
+  --surface3: #eaf0fc;
+  --border: rgba(60,100,200,0.12);
+  --border-strong: rgba(60,100,200,0.25);
+  --text: #0d1525;
+  --text-muted: #4a6080;
+  --text-dim: #8090b0;
+  --primary: #1a6fe8;
+  --primary-glow: rgba(26,111,232,0.15);
+  --accent: #00b894;
+  --accent-glow: rgba(0,184,148,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(77,159,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77,159,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+* { position: relative; z-index: 1; }
+
+/* ===== HEADER ===== */
+.header {
+  background: linear-gradient(135deg, #060e1e 0%, #0a1628 50%, #060e1e 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+}
+
+[data-theme="light"] .header {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+  opacity: 0.5;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.logo-text { line-height: 1.2; }
+.logo-text h1 { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-text h1 span { color: var(--primary); }
+.logo-text p { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+
+.header-right { display: flex; align-items: center; gap: 6px; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border-radius: var(--r-sm);
+  border: none;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn:active { transform: scale(0.96); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), #2d7fe0);
+  color: #fff;
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(77,159,255,0.4); transform: translateY(-1px); }
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent), #00c4a0);
+  color: #041e1a;
+  font-weight: 700;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.btn-accent:hover { box-shadow: 0 6px 24px rgba(0,229,180,0.35); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--border-strong); background: var(--surface3); }
+
+.btn-danger-soft {
+  background: rgba(255,92,122,0.1);
+  color: var(--danger);
+  border: 1px solid rgba(255,92,122,0.25);
+}
+.btn-danger-soft:hover { background: rgba(255,92,122,0.2); }
+
+.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+.btn-lg { padding: 12px 24px; font-size: 14px; border-radius: 10px; }
+.btn-full { width: 100%; }
+.btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 7px; font-size: 14px; }
+
+/* ===== LAYOUT ===== */
+.app-shell {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+}
+
+.left-panel {
+  padding: 16px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.right-panel {
+  padding: 16px;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .right-panel { position: static; height: auto; border-top: 1px solid var(--border); }
+}
+
+/* ===== TABS ===== */
+.tabs-nav {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.tab-btn.active {
+  background: var(--surface3);
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.ci-blue { background: rgba(77,159,255,0.12); }
+.ci-green { background: rgba(0,229,180,0.12); }
+.ci-purple { background: rgba(155,100,255,0.12); }
+.ci-orange { background: rgba(255,179,71,0.12); }
+
+.card-title { font-size: 13px; font-weight: 700; }
+.card-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+/* ===== COMPACT FORM ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.form-grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid.g1 { grid-template-columns: 1fr; }
+.full { grid-column: 1/-1; }
+
+@media (max-width: 640px) {
+  .form-grid, .form-grid.g3 { grid-template-columns: 1fr; }
+}
+
+.fgroup { display: flex; flex-direction: column; gap: 3px; }
+
+label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.req { color: var(--danger); }
+
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  padding: 5px 9px;
+  font-family: var(--font);
+  font-size: 11px;
+  transition: all 0.2s;
+  width: 100%;
+  appearance: none;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+  background: var(--surface3);
+}
+
+input.has-error { border-color: var(--danger) !important; box-shadow: 0 0 0 2px rgba(255,92,122,0.15); }
+.err { font-size: 10px; color: var(--danger); margin-top: 1px; min-height: 12px; }
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+select option { background: var(--surface2); }
+
+/* ===== OCR ZONE ===== */
+.ocr-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  margin-bottom: 12px;
+  background: var(--surface2);
+  position: relative;
+}
+
+.ocr-zone:hover, .ocr-zone.drag-over {
+  border-color: var(--primary);
+  background: rgba(77,159,255,0.06);
+}
+
+.ocr-zone .ocr-icon { font-size: 20px; margin-bottom: 6px; }
+.ocr-zone .ocr-title { font-size: 11px; font-weight: 700; color: var(--text); }
+.ocr-zone .ocr-sub { font-size: 10px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.ocr-zone .ocr-btns { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+
+.ocr-progress-wrap {
+  display: none;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.ocr-progress-wrap.show { display: block; }
+
+.ocr-progress-label { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+.ocr-progress-bar-bg { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.ocr-progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 2px; transition: width 0.3s; width: 0%; }
+
+.ocr-result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.ocr-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ocr-tag.ok { background: rgba(0,229,180,0.12); color: var(--accent); }
+.ocr-tag.miss { background: rgba(255,179,71,0.12); color: var(--warn); }
+
+.ocr-preview {
+  width: 100%;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 7px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+
+/* ===== SECTION LABEL ===== */
+.sec-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 12px 0 8px;
+}
+
+.sec-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+/* ===== TOGGLE ===== */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.toggle-row:hover { border-color: var(--border-strong); }
+
+.toggle-switch {
+  width: 32px; height: 18px;
+  background: var(--surface3);
+  border-radius: 9px;
+  position: relative;
+  transition: background 0.25s;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.toggle-switch.on { background: linear-gradient(135deg, var(--primary), #2d7fe0); border-color: var(--primary); }
+
+.toggle-thumb {
+  width: 12px; height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: left 0.25s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.toggle-switch.on .toggle-thumb { left: 16px; }
+.toggle-label { font-size: 12px; font-weight: 600; }
+
+/* ===== BS CLAUSE CARDS — ONE LINE ===== */
+.bs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bs-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 34px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.bs-card:hover:not(.selected) {
+  border-color: var(--border-strong);
+  background: var(--surface3);
+}
+
+.bs-card.selected {
+  background: rgba(77,159,255,0.05);
+  border: 2px solid var(--primary);
+  box-shadow: inset 0 2px 7px rgba(0,0,0,0.35), inset 0 1px 3px rgba(0,0,0,0.2);
+  transform: translateY(1px);
+}
+
+.bs-code {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: var(--mono);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 38px;
+}
+
+.bs-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bs-rate {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ===== PRICE LOOKUP ===== */
+.price-lookup-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: rgba(0,229,180,0.06);
+  border: 1px solid rgba(0,229,180,0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.price-lookup-trigger:hover { background: rgba(0,229,180,0.12); border-color: var(--accent); }
+.price-lookup-trigger span { font-size: 11px; font-weight: 600; color: var(--accent); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-body { padding: 16px 20px; }
+.modal-footer { padding: 12px 20px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+.lookup-source {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 7px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.lookup-source:hover { border-color: var(--primary); background: var(--surface3); }
+.lookup-source .ls-icon { font-size: 16px; }
+.lookup-source .ls-name { font-size: 12px; font-weight: 600; }
+.lookup-source .ls-url { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
+.lookup-source .ls-arrow { margin-left: auto; color: var(--text-dim); font-size: 11px; }
+
+.market-price-input {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(0,229,180,0.05);
+  border: 1px solid rgba(0,229,180,0.2);
+  border-radius: 10px;
+}
+
+/* ===== RESULT PANEL ===== */
+.result-hero {
+  background: linear-gradient(135deg, #0a1f3a, #0d2640, #071520);
+  border: 1px solid rgba(77,159,255,0.2);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="light"] .result-hero {
+  background: linear-gradient(135deg, #e8f0ff, #f0f6ff, #e4eeff);
+}
+
+.result-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(77,159,255,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.rh-label { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.rh-value {
+  font-size: 30px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin: 4px 0;
+  font-family: var(--mono);
+}
+.rh-note { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+/* ===== STAT GRID ===== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.stat-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-val { font-size: 16px; font-weight: 800; font-family: var(--mono); }
+.stat-val.blue { color: var(--primary); }
+.stat-val.green { color: var(--accent); }
+.stat-val.orange { color: var(--warn); }
+.stat-lab { font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+
+/* ===== BREAKDOWN ===== */
+.bd-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 7px;
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  transition: background 0.15s;
+}
+
+.bd-item:hover { background: var(--surface2); }
+.bd-item.highlight { background: rgba(77,159,255,0.08); border: 1px solid rgba(77,159,255,0.15); }
+.bd-item.floor-hit { background: rgba(255,179,71,0.08); border: 1px solid rgba(255,179,71,0.2); }
+.bd-item.final-row {
+  background: linear-gradient(135deg, rgba(77,159,255,0.12), rgba(0,229,180,0.08));
+  border: 1px solid rgba(77,159,255,0.3);
+  margin-top: 7px;
+}
+
+.bd-label { color: var(--text-muted); }
+.bd-val { font-weight: 700; font-family: var(--mono); }
+.bd-val.pos { color: var(--danger); }
+.bd-val.neg { color: var(--accent); }
+.bd-val.neutral { color: var(--text); }
+.bd-val.big { font-size: 13px; color: var(--primary); }
+
+.divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+/* ===== HISTORY TABLE ===== */
+.hist-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.hist-table th {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 9px;
+  padding: 7px 9px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.hist-table td { padding: 7px 9px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+.hist-table tr:hover td { background: var(--surface2); }
+
+/* ===== LOADING ===== */
+.loading-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(8,12,20,0.85);
+  backdrop-filter: blur(6px);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+}
+.loading-screen.show { display: flex; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--surface3);
+  border-top-color: var(--primary);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-screen p { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+
+/* ===== FLOOR CONFIG ===== */
+.floor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.floor-row label { font-size: 11px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.floor-row input { width: 70px; text-align: center; }
+
+/* ===== ALERTS ===== */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.alert-warn { background: rgba(255,179,71,0.08); border: 1px solid rgba(255,179,71,0.25); color: var(--warn); }
+.alert-info { background: rgba(77,159,255,0.08); border: 1px solid rgba(77,159,255,0.2); color: #7ab8ff; }
+.alert-ok { background: rgba(0,229,180,0.08); border: 1px solid rgba(0,229,180,0.2); color: var(--accent); }
+
+/* ===== VEHICLE INFO GRID ===== */
+.vinfo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+
+.vinfo-item {
+  padding: 7px 10px;
+  background: var(--surface2);
+  border-radius: 7px;
+  border-left: 2px solid var(--primary);
+}
+
+.vinfo-lab { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.vinfo-val { font-size: 12px; font-weight: 600; margin-top: 2px; }
+
+/* ===== EMPTY STATE ===== */
+.empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
+.empty h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+.empty p { font-size: 12px; line-height: 1.6; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.result-animate { animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+
+/* ===== PRINT ===== */
+@media print {
+  .header, .tabs-nav, .btn, .no-print, body::before, body::after { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .rh-value { -webkit-text-fill-color: #1a6fe8; }
+  .app-shell { grid-template-columns: 1fr; }
+  .right-panel { position: static; height: auto; }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ===== BADGE ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.badge-blue { background: rgba(77,159,255,0.12); color: var(--primary); }
+.badge-green { background: rgba(0,229,180,0.12); color: var(--accent); }
+.badge-warn { background: rgba(255,179,71,0.12); color: var(--warn); }
+.badge-red { background: rgba(255,92,122,0.12); color: var(--danger); }
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .header { padding: 0 12px; }
+  .logo-text p { display: none; }
+  .left-panel, .right-panel { padding: 12px; }
+  .vinfo-grid { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ===== TOAST NOTIFICATIONS ===== */
+.toast-wrap {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  backdrop-filter: blur(12px);
+  animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1);
+  max-width: 90vw;
+}
+.toast.ok   { border-color: rgba(0,229,180,0.45);  box-shadow: 0 8px 32px rgba(0,229,180,0.12); }
+.toast.warn { border-color: rgba(255,179,71,0.45); box-shadow: 0 8px 32px rgba(255,179,71,0.12); }
+.toast.err  { border-color: rgba(255,92,122,0.45); box-shadow: 0 8px 32px rgba(255,92,122,0.12); }
+.toast.out  { animation: toastOut 0.3s forwards; }
+@keyframes toastIn  { from { opacity:0; transform: translateY(12px) scale(0.95); } to { opacity:1; transform:none; } }
+@keyframes toastOut { to   { opacity:0; transform: translateY(8px)  scale(0.97); } }
+
+/* ===== VIVID STAT BOXES ===== */
+.stat-box:nth-child(1) { border-top: 2px solid var(--primary); background: linear-gradient(180deg, rgba(77,159,255,0.07), transparent 65%), var(--surface); }
+.stat-box:nth-child(2) { border-top: 2px solid var(--warn);    background: linear-gradient(180deg, rgba(255,179,71,0.07), transparent 65%), var(--surface); }
+.stat-box:nth-child(3) { border-top: 2px solid var(--accent);  background: linear-gradient(180deg, rgba(0,229,180,0.07), transparent 65%), var(--surface); }
+
+/* ===== HERO ANIMATED GRADIENT BAR ===== */
+.result-hero::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), #a78bfa, var(--warn), var(--primary));
+  background-size: 300% 100%;
+  animation: heroFlow 7s linear infinite;
+}
+@keyframes heroFlow { to { background-position: 300% 0; } }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <p id="loadingText">Đang tính phí bảo hiểm...</p>
+</div>
+
+<!-- MODAL: TRA CỨU GIÁ XE -->
+<div class="modal-overlay" id="priceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:15px;font-weight:800" id="modalCarName">Tra cứu giá xe</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Tra cứu giá thị trường trên các trang mua bán xe Việt Nam</div>
+      </div>
+      <button class="btn btn-ghost btn-icon" onclick="closePriceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info" style="margin-bottom:12px">
+        💡 Mở các trang bên dưới, tìm xe cùng hãng/model/năm để xác định giá thị trường, rồi nhập vào ô bên dưới.
+      </div>
+      <div id="lookupSources"></div>
+      <div class="market-price-input">
+        <label style="text-transform:none;letter-spacing:0;font-size:12px;color:var(--text);font-weight:700;display:block;margin-bottom:7px">
+          💰 Nhập giá thị trường sau khi tra cứu
+        </label>
+        <div style="display:flex;gap:7px;align-items:flex-end">
+          <div style="flex:1">
+            <label>Giá xe (VNĐ)</label>
+            <input type="number" id="marketPriceInput" placeholder="850000000" style="margin-top:3px">
+          </div>
+          <button class="btn btn-accent" onclick="useMarketPrice()">Dùng giá này →</button>
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:var(--text-muted)" id="marketPriceDisplay"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closePriceModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">🛡️</div>
+    <div class="logo-text">
+      <h1>PTI <span>Insurance</span> Calculator PRO</h1>
+      <p>Bảo hiểm vật chất xe ô tô · Phiên bản chuyên nghiệp</p>
+    </div>
+  </div>
+  <div class="header-right no-print">
+    <button class="btn btn-ghost btn-sm" onclick="toggleTheme()"><span id="themeIcon">☀️</span></button>
+    <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ In PDF</button>
+  </div>
+</header>
+
+<!-- APP SHELL -->
+<div class="app-shell">
+
+  <!-- ===== LEFT PANEL ===== -->
+  <div class="left-panel">
+
+    <!-- TABS -->
+    <div class="tabs-nav no-print">
+      <button class="tab-btn active" onclick="switchTab('calc',this)">🧮 Tính phí</button>
+      <button class="tab-btn" onclick="switchTab('history',this)">📋 Lịch sử</button>
+      <button class="tab-btn" onclick="switchTab('guide',this)">📖 Hướng dẫn</button>
+    </div>
+
+    <!-- ===== TAB CALC ===== -->
+    <div id="tab-calc">
+
+      <!-- CARD: THÔNG TIN XE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-blue">🚗</div>
+          <div style="flex:1">
+            <div class="card-title">Thông tin xe từ giấy tờ</div>
+            <div class="card-sub">Tải ảnh đăng ký / đăng kiểm hoặc dán từ clipboard</div>
+          </div>
+        </div>
+
+        <!-- API KEY SETUP -->
+        <div id="apiKeySetup" style="display:none;margin-bottom:10px;padding:10px 12px;background:rgba(77,159,255,0.07);border:1px solid rgba(77,159,255,0.2);border-radius:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--primary);margin-bottom:6px">🔑 ANTHROPIC API KEY — Nhận dạng bằng Claude Vision (chính xác hơn Tesseract)</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." style="flex:1;font-size:11px;padding:5px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono)">
+            <button class="btn btn-primary btn-sm" onclick="saveApiKey()" style="white-space:nowrap">Lưu key</button>
+          </div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:4px">Key lưu trong localStorage, không gửi lên máy chủ. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--primary)">Lấy key tại đây →</a></div>
+        </div>
+
+        <!-- OCR UPLOAD ZONE -->
+        <div class="ocr-zone" id="ocrZone"
+          onclick="document.getElementById('ocrFileInput').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)">
+          <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+          <div class="ocr-icon">📷</div>
+          <div class="ocr-title">Kéo thả nhiều ảnh giấy tờ xe vào đây</div>
+          <div id="ocrZoneSub" class="ocr-sub">Chọn nhiều file cùng lúc hoặc kéo thả đồng thời · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> để dán từ clipboard</div>
+          <div class="ocr-btns" onclick="event.stopPropagation()">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
+            <button class="btn btn-ghost btn-sm" id="btnSetupKey" onclick="event.stopPropagation();toggleApiKeySetup()" style="font-size:10px">🔑 API Key</button>
+          </div>
+        </div>
+        <!-- PREVIEW STRIP -->
+        <div id="ocrPreviewStrip" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+
+        <!-- OCR PROGRESS -->
+        <div class="ocr-progress-wrap" id="ocrProgressWrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <div class="ocr-progress-label" id="ocrProgressLabel">Đang nhận dạng văn bản...</div>
+            <div id="ocrProgressPct" style="font-size:10px;font-weight:700;color:var(--primary);font-family:var(--mono)">0%</div>
+          </div>
+          <div class="ocr-progress-bar-bg">
+            <div class="ocr-progress-bar" id="ocrProgressBar"></div>
+          </div>
+          <div class="ocr-result-tags" id="ocrResultTags"></div>
+        </div>
+
+        <!-- HIDDEN INPUTS — dùng cho tính toán, không hiển thị -->
+        <div style="display:none">
+          <input type="text"   id="f_plate"   maxlength="15">
+          <input type="text"   id="f_owner">
+          <input type="text"   id="f_addr">
+          <input type="text"   id="f_brand"   oninput="checkPriceLookup()">
+          <input type="text"   id="f_model"   oninput="onModelInput()">
+          <input type="text"   id="f_version">
+          <input type="text"   id="f_chassis">
+          <input type="text"   id="f_engine">
+          <input type="number" id="f_year"    oninput="checkPriceLookup()">
+          <input type="number" id="f_seats">
+          <input type="text"   id="f_country">
+          <input type="checkbox" id="f_transport">
+          <div class="err" id="err_year"></div>
+          <span id="versionBadge"></span>
+        </div>
+
+        <!-- BẢNG THÔNG TIN XE — hiển thị sau OCR, có thể chỉnh sửa -->
+        <div id="vehicleInfoTable" style="display:none;margin-top:4px">
+          <table style="width:100%;border-collapse:collapse" id="vitTable">
+            <!-- rows được render bởi renderVehicleTable() -->
+          </table>
+          <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:9px;color:var(--text-muted)">✏️ Click vào giá trị để chỉnh sửa</span>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:600;margin-left:auto">
+              <input type="checkbox" id="f_transport_vis" style="width:14px;height:14px;accent-color:var(--warn)" onchange="syncTransport(this)">
+              <span id="f_transport_label" style="color:var(--text-muted)">Kinh doanh vận tải</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- NÚT TRA GIÁ TRỊ XE -->
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btnTraGia" onclick="traGiaTriXe()" style="flex:1;min-width:160px">
+            💹 Tra giá trị xe thị trường
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="openPriceModal()" style="flex-shrink:0" id="btnTraThuCong">Tra thủ công →</button>
+        </div>
+
+        <!-- AUTO PRICE STATUS -->
+        <div id="autoPriceStatus" style="display:none;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(0,229,180,0.06);border:1px solid rgba(0,229,180,0.2);border-radius:8px">
+            <span id="autoPriceIcon">⏳</span>
+            <span id="autoPriceLabel" style="font-size:11px;font-weight:600;color:var(--accent);flex:1">Đang tìm giá thị trường...</span>
+          </div>
+        </div>
+        <!-- PRICE LOOKUP TRIGGER (manual fallback, hidden — kept for compatibility) -->
+        <div id="priceLookupTrigger" style="display:none">
+          <div class="price-lookup-trigger" onclick="openPriceModal()">
+            <span>🔍</span>
+            <span id="priceLookupLabel">Tra cứu giá xe thị trường</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">→</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD: THÔNG TIN BẢO HIỂM -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-green">📋</div>
+          <div>
+            <div class="card-title">Thông tin bảo hiểm</div>
+            <div class="card-sub">Các thông số tính phí chính</div>
+          </div>
+        </div>
+
+        <div class="form-grid g1">
+          <div class="fgroup">
+            <label>Loại xe <span class="req">*</span></label>
+            <select id="f_type">
+              <option value="">-- Chọn loại xe --</option>
+              <option value="1">1. Xe con ≤9 chỗ không KDVT, xe Van</option>
+              <option value="2">2. Xe Pickup</option>
+              <option value="3">3. Xe điện chở người (khu DL, nội bộ)</option>
+              <option value="4">4. Xe chở người >9 chỗ không KDVT; Bus nội tỉnh</option>
+              <option value="5">5. Xe chở khách HĐ >9 chỗ</option>
+              <option value="6">6. Xe chuyên dùng; Romooc chuyên dùng</option>
+              <option value="7">7. Xe khách liên tỉnh; Bus liên tỉnh</option>
+              <option value="8">8. Xe tải (kể cả xe bảo ôn) · HINO +5%</option>
+              <option value="9">9. Xe đầu kéo; Xe đông lạnh; KV khai thác khoáng sản</option>
+              <option value="10">10. Rơ móc</option>
+              <option value="11">11. Xe taxi công nghệ (Grab / Bee / GSM...)</option>
+              <option value="12">12. Xe con KDVT ≤9 chỗ</option>
+              <option value="13">13. Xe Taxi truyền thống có mào</option>
+              <option value="14">14. Xe Demo – Test Drive</option>
+            </select>
+            <div class="err" id="err_type"></div>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:8px">
+          <div class="fgroup">
+            <label>Số tiền bảo hiểm (VNĐ) <span class="req">*</span></label>
+            <input type="number" id="f_value" placeholder="850000000" min="1000000" oninput="updateValueFmt()">
+            <div class="err" id="err_value"></div>
+          </div>
+          <div class="fgroup">
+            <label>Giá trị (hiển thị)</label>
+            <input type="text" id="f_value_fmt" placeholder="850.000.000 ₫" readonly
+              style="color:var(--primary);font-weight:700;font-family:var(--mono)">
+          </div>
+
+          <div class="fgroup">
+            <label>Loại khách hàng</label>
+            <select id="f_ctype">
+              <option value="personal">Cá nhân</option>
+              <option value="business">Doanh nghiệp</option>
+              <option value="hcsn">Hành chính sự nghiệp (HCSN)</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <label>Số xe trong đoàn</label>
+            <input type="number" id="f_count" value="1" min="1" max="9999">
+          </div>
+
+          <div class="fgroup">
+            <label>Thời hạn bảo hiểm (tháng)</label>
+            <input type="number" id="f_dur" value="12" min="1" max="60">
+          </div>
+          <div class="fgroup">
+            <label>Mức khấu trừ / vụ</label>
+            <select id="f_deduct">
+              <option value="0">500.000₫ (mức sàn)</option>
+              <option value="1">1.000.000₫ (−5%)</option>
+              <option value="2">2.000.000₫ (−10%)</option>
+              <option value="5">5.000.000₫ (−32.5%)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TÁI TỤC -->
+        <div class="sec-label">🔄 Tái tục</div>
+        <div class="toggle-row" onclick="toggleRenewal()">
+          <div class="toggle-switch" id="renewToggle"><div class="toggle-thumb"></div></div>
+          <div class="toggle-label">Xe tái tục bảo hiểm tại PTI</div>
+        </div>
+
+        <div id="renewFields" style="display:none;margin-top:8px">
+          <div class="form-grid g3">
+            <div class="fgroup">
+              <label>TLBT năm trước (%)</label>
+              <input type="number" id="f_tlbt" value="0" min="0" max="500" step="0.1">
+            </div>
+            <div class="fgroup">
+              <label>Số vụ tổn thất</label>
+              <input type="number" id="f_claims" value="0" min="0">
+            </div>
+            <div class="fgroup">
+              <label>Ngắt quãng (tháng)</label>
+              <input type="number" id="f_gap" value="0" min="0" oninput="checkGap()">
+            </div>
+          </div>
+          <div class="alert alert-warn" id="gapAlert" style="display:none;margin-top:7px">
+            ⚠️ Ngắt quãng > 12 tháng — tính phí như xe lần đầu tham gia bảo hiểm.
+          </div>
+        </div>
+
+        <!-- PHÍ SÀN -->
+        <div class="sec-label">⚙️ Phí sàn</div>
+        <div class="floor-row">
+          <label style="white-space:nowrap;font-size:11px">Hệ số sàn:</label>
+          <input type="number" id="f_floor" value="0.70" min="0.1" max="1" step="0.01">
+          <span style="font-size:10px;color:var(--text-muted)">(mặc định 0.70)</span>
+        </div>
+      </div>
+
+      <!-- CARD: ĐIỀU KHOẢN BỔ SUNG -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-purple">➕</div>
+          <div style="flex:1">
+            <div class="card-title">Điều khoản bổ sung</div>
+            <div class="card-sub">Nhấn để chọn / bỏ chọn từng điều khoản</div>
+          </div>
+          <span id="bsCountBadge" style="font-size:10px;color:var(--text-muted)">0 đã chọn</span>
+        </div>
+        <div class="bs-list" id="bsList"></div>
+      </div>
+
+      <!-- ACTION -->
+      <div class="no-print" style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-accent btn-lg" style="flex:2" onclick="calculate()">
+          ⚡ Tính phí bảo hiểm
+        </button>
+        <button class="btn btn-ghost" onclick="resetForm()" style="padding:12px 16px">↺ Reset</button>
+      </div>
+
+    </div>
+
+    <!-- ===== TAB HISTORY ===== -->
+    <div id="tab-history" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange">📋</div>
+          <div style="flex:1"><div class="card-title">Lịch sử tính phí</div></div>
+          <button class="btn btn-ghost btn-sm no-print" onclick="exportHistoryCSV()">⬇️ Xuất CSV</button>
+          <button class="btn btn-danger-soft btn-sm no-print" onclick="clearHistory()">🗑️ Xóa</button>
+        </div>
+        <div id="histContent"></div>
+      </div>
+    </div>
+
+    <!-- ===== TAB GUIDE ===== -->
+    <div id="tab-guide" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-blue">📖</div>
+          <div class="card-title">Nguyên lý tính phí bảo hiểm VCX PTI</div>
+        </div>
+
+        <div class="sec-label">A. Phí bảo hiểm gốc</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.7">
+          Phí = (Tỷ lệ phí cơ bản + Tổng tỷ lệ BS) × Số tiền bảo hiểm<br>
+          Tỷ lệ cơ bản được tra theo <strong>Loại xe × Nhóm tuổi xe × Mức giá trị xe</strong>.
+        </p>
+
+        <div class="sec-label">B. Tăng / Giảm phí</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px">
+          <div class="bd-item"><span class="bd-label">Xe Mercedes</span><span class="bd-val pos">+10%</span></div>
+          <div class="bd-item"><span class="bd-label">Xe tải HINO</span><span class="bd-val pos">+5%</span></div>
+          <div class="bd-item"><span class="bd-label">Doanh nghiệp / HCSN</span><span class="bd-val neg">−10%</span></div>
+          <div class="bd-item"><span class="bd-label">Đoàn 10–30 xe</span><span class="bd-val neg">−10%</span></div>
+          <div class="bd-item"><span class="bd-label">Đoàn 31–50 xe</span><span class="bd-val neg">−15%</span></div>
+          <div class="bd-item"><span class="bd-label">Đoàn > 50 xe</span><span class="bd-val neg">−20%</span></div>
+          <div class="bd-item"><span class="bd-label">Khấu trừ 1 triệu</span><span class="bd-val neg">−5%</span></div>
+          <div class="bd-item"><span class="bd-label">Khấu trừ 2 triệu</span><span class="bd-val neg">−10%</span></div>
+          <div class="bd-item"><span class="bd-label">Khấu trừ 5 triệu</span><span class="bd-val neg">−32.5%</span></div>
+        </div>
+
+        <div class="sec-label">C. Phí sàn</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          Phí sàn = Hệ số sàn × Phí lần đầu. Phí cuối <strong>không được</strong> thấp hơn phí sàn.
+        </p>
+
+        <div class="sec-label">D. Tái tục</div>
+        <div style="display:grid;gap:4px;margin-bottom:10px">
+          <div class="bd-item"><span class="bd-label">TLBT &lt; 30%</span><span class="bd-val neg">×0.82 (giảm 18%)</span></div>
+          <div class="bd-item"><span class="bd-label">TLBT 30%–60%</span><span class="bd-val neutral">×0.95 (giảm 5%)</span></div>
+          <div class="bd-item"><span class="bd-label">TLBT 60%–100%</span><span class="bd-val neutral">×1.00</span></div>
+          <div class="bd-item"><span class="bd-label">TLBT > 100%</span><span class="bd-val pos">×1.15 (tăng 15%)</span></div>
+          <div class="bd-item"><span class="bd-label">Ngắt quãng > 12 tháng</span><span class="bd-val pos">Tính lại như xe mới</span></div>
+        </div>
+
+        <div class="sec-label">E. Thời hạn bảo hiểm</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          <div class="bd-item"><span class="bd-label">3 tháng</span><span class="bd-val">40% phí năm</span></div>
+          <div class="bd-item"><span class="bd-label">6 tháng</span><span class="bd-val">60% phí năm</span></div>
+          <div class="bd-item"><span class="bd-label">9 tháng</span><span class="bd-val">75% phí năm</span></div>
+          <div class="bd-item"><span class="bd-label">12 tháng</span><span class="bd-val">100% phí năm</span></div>
+          <div class="bd-item"><span class="bd-label">2–3 năm</span><span class="bd-val neg">Giảm 10%</span></div>
+          <div class="bd-item"><span class="bd-label">3–5 năm</span><span class="bd-val neg">Giảm 15%</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- ===== RIGHT PANEL: RESULTS ===== -->
+  <div class="right-panel">
+
+    <div id="resultEmpty">
+      <div class="empty">
+        <div class="empty-icon">🛡️</div>
+        <h3>PTI Insurance Calculator PRO</h3>
+        <p>Tải ảnh giấy đăng ký / đăng kiểm để OCR tự động<br>hoặc điền thông tin xe rồi nhấn<br><strong style="color:var(--accent)">⚡ Tính phí bảo hiểm</strong></p>
+      </div>
+    </div>
+
+    <div id="resultContent" style="display:none">
+
+      <!-- HERO -->
+      <div class="result-hero result-animate">
+        <div class="rh-label">💰 PHÍ BẢO HIỂM CUỐI CÙNG</div>
+        <div class="rh-value" id="r_final">--</div>
+        <div class="rh-note" id="r_note">--</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-val blue" id="r_rate">--%</div>
+          <div class="stat-lab">Tỷ lệ phí</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val orange" id="r_adj">0%</div>
+          <div class="stat-lab">Điều chỉnh</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val green" id="r_floor">--</div>
+          <div class="stat-lab">Phí sàn</div>
+        </div>
+      </div>
+
+      <!-- BREAKDOWN -->
+      <div class="card result-animate" style="animation-delay:0.1s">
+        <div class="card-header">
+          <div class="card-icon ci-orange">📊</div>
+          <div class="card-title">Chi tiết tính phí</div>
+        </div>
+        <div id="r_breakdown"></div>
+      </div>
+
+      <!-- DEDUCTIBLE COMPARISON -->
+      <div class="card result-animate" style="animation-delay:0.12s">
+        <div class="card-header">
+          <div class="card-icon ci-green">⚖️</div>
+          <div class="card-title">So sánh mức khấu trừ</div>
+        </div>
+        <div id="r_deduct_compare"></div>
+      </div>
+
+      <!-- CHART -->
+      <div class="card result-animate" style="animation-delay:0.15s">
+        <div class="card-header">
+          <div class="card-icon ci-purple">📈</div>
+          <div class="card-title">Biểu đồ phân tích</div>
+        </div>
+        <canvas id="feeChart" height="200"></canvas>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="card result-animate" style="animation-delay:0.2s">
+        <div class="card-header">
+          <div class="card-icon ci-blue">📄</div>
+          <div class="card-title">Tóm tắt hồ sơ</div>
+        </div>
+        <div class="vinfo-grid" id="r_summary"></div>
+        <div class="divider"></div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap" class="no-print">
+          <button class="btn btn-ghost btn-sm" onclick="saveHistory()">💾 Lưu lịch sử</button>
+          <button class="btn btn-ghost btn-sm" onclick="copySummary()">📋 Sao chép</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ In / PDF</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<script>
+// ============================================================
+// RATE TABLE
+// ============================================================
+const V_RANGES = [200, 300, 400, 500, 700, 1000, Infinity];
+const V_LABELS = ['<200M', '200–300M', '300–400M', '400–500M', '500–700M', '700M–1B', '>1 Tỷ'];
+
+const RATES = {
+  1:  { n:'Xe con ≤9 chỗ không KDVT, xe Van',
+        r:{ a03:[1.56,1.50,1.45,1.42,1.38,1.35,1.30], a36:[1.62,1.56,1.52,1.48,1.44,1.40,1.35], a610:[1.72,1.65,1.60,1.56,1.52,1.48,1.42], a1015:[1.85,1.78,1.72,1.68,1.62,1.58,1.52] }},
+  2:  { n:'Xe Pickup',
+        r:{ a03:[1.65,1.58,1.52,1.48,1.44,1.40,1.35], a36:[1.72,1.65,1.58,1.54,1.50,1.46,1.40], a610:[1.82,1.74,1.68,1.63,1.58,1.54,1.48], a1015:[1.95,1.88,1.82,1.77,1.72,1.67,1.60] }},
+  3:  { n:'Xe điện chở người (khu DL, nội bộ)',
+        r:{ a03:[1.40,1.35,1.30,1.28,1.25,1.22,1.18], a36:[1.48,1.42,1.37,1.34,1.30,1.27,1.22], a610:[1.58,1.52,1.46,1.42,1.38,1.34,1.28], a1015:[1.70,1.64,1.58,1.54,1.50,1.46,1.40] }},
+  4:  { n:'Xe chở người >9 chỗ không KDVT; Bus nội tỉnh',
+        r:{ a03:[1.68,1.62,1.56,1.52,1.48,1.44,1.38], a36:[1.76,1.70,1.64,1.60,1.55,1.50,1.44], a610:[1.86,1.80,1.74,1.69,1.64,1.58,1.52], a1015:[2.00,1.93,1.87,1.82,1.76,1.70,1.64] }},
+  5:  { n:'Xe chở khách HĐ >9 chỗ',
+        r:{ a03:[1.80,1.74,1.68,1.63,1.58,1.53,1.47], a36:[1.90,1.84,1.78,1.73,1.67,1.62,1.55], a610:[2.02,1.96,1.89,1.84,1.78,1.72,1.65], a1015:[2.18,2.11,2.04,1.98,1.92,1.86,1.78] }},
+  6:  { n:'Xe chuyên dùng; Romooc chuyên dùng',
+        r:{ a03:[1.75,1.68,1.62,1.58,1.53,1.49,1.43], a36:[1.83,1.76,1.70,1.66,1.61,1.56,1.50], a610:[1.95,1.88,1.82,1.77,1.71,1.66,1.59], a1015:[2.10,2.03,1.96,1.91,1.85,1.79,1.72] }},
+  7:  { n:'Xe khách liên tỉnh; Bus liên tỉnh',
+        r:{ a03:[1.90,1.83,1.77,1.72,1.67,1.62,1.55], a36:[2.00,1.93,1.87,1.82,1.76,1.71,1.64], a610:[2.14,2.07,2.00,1.95,1.89,1.83,1.76], a1015:[2.30,2.23,2.16,2.10,2.04,1.97,1.90] }},
+  8:  { n:'Xe tải (kể cả xe bảo ôn)',
+        r:{ a03:[1.70,1.64,1.58,1.54,1.50,1.46,1.40], a36:[1.80,1.74,1.68,1.63,1.58,1.53,1.47], a610:[1.94,1.87,1.80,1.75,1.70,1.64,1.58], a1015:[2.10,2.03,1.96,1.90,1.84,1.78,1.72] }},
+  9:  { n:'Xe đầu kéo; Xe đông lạnh; KV khai thác khoáng sản',
+        r:{ a03:[2.10,2.03,1.96,1.91,1.85,1.80,1.73], a36:[2.25,2.18,2.11,2.05,1.99,1.93,1.86], a610:[2.42,2.35,2.27,2.21,2.15,2.08,2.00], a1015:[2.62,2.54,2.46,2.40,2.33,2.26,2.18] }},
+  10: { n:'Rơ móc',
+        r:{ a03:[1.20,1.15,1.12,1.09,1.06,1.03,0.98], a36:[1.28,1.23,1.19,1.16,1.13,1.10,1.05], a610:[1.38,1.33,1.28,1.25,1.21,1.18,1.12], a1015:[1.50,1.45,1.40,1.36,1.32,1.28,1.22] }},
+  11: { n:'Xe taxi công nghệ (Grab/Bee/GSM...)',
+        r:{ a03:[2.20,2.13,2.06,2.01,1.95,1.89,1.82], a36:[2.35,2.28,2.20,2.14,2.08,2.02,1.94], a610:[2.52,2.44,2.36,2.30,2.24,2.17,2.09], a1015:[2.72,2.64,2.55,2.49,2.42,2.35,2.26] }},
+  12: { n:'Xe con KDVT ≤9 chỗ',
+        r:{ a03:[2.00,1.93,1.87,1.82,1.76,1.71,1.64], a36:[2.12,2.05,1.98,1.93,1.87,1.81,1.74], a610:[2.28,2.20,2.13,2.07,2.01,1.95,1.87], a1015:[2.46,2.38,2.30,2.24,2.17,2.10,2.02] }},
+  13: { n:'Xe Taxi truyền thống có mào',
+        r:{ a03:[2.30,2.23,2.15,2.09,2.03,1.97,1.89], a36:[2.46,2.38,2.30,2.24,2.17,2.10,2.02], a610:[2.64,2.56,2.47,2.41,2.34,2.27,2.18], a1015:[2.85,2.76,2.67,2.60,2.53,2.45,2.36] }},
+  14: { n:'Xe Demo – Test Drive',
+        r:{ a03:[2.50,2.42,2.34,2.28,2.21,2.14,2.06], a36:[2.50,2.42,2.34,2.28,2.21,2.14,2.06], a610:[2.50,2.42,2.34,2.28,2.21,2.14,2.06], a1015:[2.50,2.42,2.34,2.28,2.21,2.14,2.06] }},
+};
+
+// ============================================================
+// BS CLAUSES
+// ============================================================
+const BS = [
+  {c:'BS01', n:'xe ngoài lãnh thổ vn', r:0.15},
+  {c:'BS02', n:'bảo hiểm thay thế mới', r:0.30},
+  {c:'BS04', n:'mất trộm/cướp bộ phận', r:0.20},
+  {c:'BS05', n:'chọn cơ sở sửa chữa', r:0.25},
+  {c:'BS06', n:'động cơ ngập nước (thủy kích)', r:0.10},
+  {c:'BS07', n:'thay xe mới năm đầu tiên', r:0.15},
+  {c:'BS08', n:'khấu trừ bậc thang', r:0.05},
+  {c:'BS09', n:'chi phí thuê xe thay thế', r:0.08},
+  {c:'BS11', n:'không / hết hạn đăng kiểm', r:0.50},
+  {c:'BS13', n:'thiết bị lắp thêm', r:0.20},
+  {c:'BS14', n:'mất / bị cướp chìa khóa', r:0.05},
+  {c:'BS15', n:'tự động tăng/giảm xe (đoàn)', r:0.05},
+  {c:'BS17', n:'mở rộng thời hạn bảo hiểm', r:0.03},
+  {c:'BS19', n:'thay đổi thông số kỹ thuật', r:0.10},
+  {c:'BS25', n:'th vật chất do hàng hóa gây ra', r:0.12},
+  {c:'BS26', n:'phụ tùng thay thế chính hãng', r:0.20},
+  {c:'BS27', n:'đầu kéo lắp hệ thống thủy lực', r:0.15},
+];
+
+// Set-based BS selection (no checkboxes)
+const bsSelected = new Set();
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmt = n => Math.round(n).toLocaleString('vi-VN') + ' ₫';
+const fmtM = n => (Math.round(n/100000)/10).toFixed(0) + 'M';
+const $ = id => document.getElementById(id);
+
+function getAge(year) { return new Date().getFullYear() - parseInt(year || 2024); }
+function getAgeKey(age) {
+  if (age < 3) return 'a03';
+  if (age < 6) return 'a36';
+  if (age < 10) return 'a610';
+  return 'a1015';
+}
+function getAgeLabel(age) {
+  if (age < 3) return 'dưới 3 năm';
+  if (age < 6) return '3–6 năm';
+  if (age < 10) return '6–10 năm';
+  return '10–15 năm';
+}
+function getValIdx(million) {
+  for (let i = 0; i < V_RANGES.length; i++) {
+    if (million < V_RANGES[i]) return i;
+  }
+  return V_RANGES.length - 1;
+}
+function shortTermFactor(m) {
+  const map = {1:0.15,2:0.28,3:0.40,4:0.50,5:0.55,6:0.60,7:0.65,8:0.70,9:0.75,10:0.82,11:0.91};
+  return map[m] || 1;
+}
+function getRenewalFactor(tlbt) {
+  if (tlbt < 30) return 0.82;
+  if (tlbt < 60) return 0.95;
+  if (tlbt <= 100) return 1.00;
+  if (tlbt <= 150) return 1.10;
+  if (tlbt <= 200) return 1.15;
+  return 1.20;
+}
+
+// ============================================================
+// TOAST — thông báo nhẹ thay alert()
+// ============================================================
+function toast(msg, type = 'ok', ms = 3200) {
+  const wrap = $('toastWrap');
+  if (!wrap) { alert(msg); return; }
+  const icons = { ok: '✅', warn: '⚠️', err: '❌' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 320);
+  }, ms);
+}
+
+// ============================================================
+// SAO CHÉP TÓM TẮT HỒ SƠ
+// ============================================================
+function copySummary() {
+  const v = window._last;
+  if (!v) { toast('Chưa có kết quả để sao chép', 'warn'); return; }
+  const lines = [
+    '🛡️ BÁO GIÁ BẢO HIỂM VẬT CHẤT XE Ô TÔ — PTI',
+    '─────────────────────────────',
+    `Biển số:        ${v.plate}`,
+    `Chủ xe:         ${v.owner}`,
+    `Xe:             ${v.brand} ${v.model} (${v.year})`,
+    `Loại xe:        ${v.type}`,
+    `Số tiền BH:     ${fmt(v.value)}`,
+    `Thời hạn:       ${v.dur} tháng`,
+    `Tỷ lệ phí:      ${v.rate.toFixed(2)}%`,
+    `Phí bảo hiểm:   ${fmt(v.finalFee)}`,
+    `VAT 10%:        ${fmt(v.vat)}`,
+    `TỔNG THANH TOÁN: ${fmt(v.feeWithVat)}`,
+    '─────────────────────────────',
+    `Ngày tính: ${v.date}`,
+  ];
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => toast('Đã sao chép tóm tắt báo giá vào clipboard'))
+    .catch(() => toast('Không sao chép được — trình duyệt chặn clipboard', 'err'));
+}
+
+// ============================================================
+// XUẤT CSV LỊCH SỬ (mở được bằng Excel, có BOM UTF-8)
+// ============================================================
+function exportHistoryCSV() {
+  const h = JSON.parse(localStorage.getItem('pti_h') || '[]');
+  if (!h.length) { toast('Chưa có lịch sử để xuất', 'warn'); return; }
+  const esc = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+  const rows = [
+    ['Ngày tính','Biển số','Chủ xe','Hãng','Model','Năm SX','Loại xe','Số tiền BH (₫)','Tỷ lệ phí (%)','Phí sàn (₫)','Phí BH (₫)','VAT (₫)','Tổng gồm VAT (₫)'],
+    ...h.map(r => [r.date, r.plate, r.owner, r.brand, r.model, r.year, r.type,
+      Math.round(r.value), r.rate.toFixed(2), Math.round(r.floorFee), Math.round(r.finalFee),
+      Math.round(r.vat || 0), Math.round(r.feeWithVat || r.finalFee)]),
+  ];
+  const csv = '﻿' + rows.map(r => r.map(esc).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pti-lich-su-tinh-phi-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`Đã xuất ${h.length} bản ghi ra file CSV`);
+}
+
+// ============================================================
+// RENDER BS LIST — single-line cards, no checkboxes
+// ============================================================
+function renderBS() {
+  $('bsList').innerHTML = BS.map(b => `
+    <div class="bs-card" id="bsc-${b.c}" onclick="toggleBS('${b.c}')">
+      <span class="bs-code">${b.c}</span>
+      <span class="bs-name">${b.n}</span>
+      <span class="bs-rate">+${b.r.toFixed(2)}%</span>
+    </div>
+  `).join('');
+}
+
+function toggleBS(code) {
+  if (bsSelected.has(code)) {
+    bsSelected.delete(code);
+    $('bsc-' + code).classList.remove('selected');
+  } else {
+    bsSelected.add(code);
+    $('bsc-' + code).classList.add('selected');
+  }
+  $('bsCountBadge').textContent = bsSelected.size > 0 ? `${bsSelected.size} đã chọn` : '0 đã chọn';
+}
+
+// ============================================================
+// CLAUDE VISION API — đọc ảnh bằng AI multimodal
+// ============================================================
+function getApiKey() {
+  return localStorage.getItem('pti_anthropic_key') || '';
+}
+
+function saveApiKey() {
+  const key = $('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    toast('API key không hợp lệ — key phải bắt đầu bằng sk-ant-', 'err');
+    return;
+  }
+  localStorage.setItem('pti_anthropic_key', key);
+  $('apiKeySetup').style.display = 'none';
+  updateOcrZoneBadge();
+  toast('Đã lưu API key — OCR sẽ dùng Claude Vision');
+}
+
+function toggleApiKeySetup() {
+  const panel = $('apiKeySetup');
+  const show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  if (show) {
+    const key = getApiKey();
+    if (key) $('apiKeyInput').value = key;
+    $('apiKeyInput').focus();
+  }
+}
+
+function updateOcrZoneBadge() {
+  const sub = $('ocrZoneSub');
+  if (!sub) return;
+  if (getApiKey()) {
+    sub.innerHTML = '✨ <strong style="color:var(--accent)">Claude Vision đang hoạt động</strong> — nhận dạng chính xác tiếng Việt · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> dán từ clipboard';
+  } else {
+    sub.innerHTML = '🧠 <strong style="color:var(--primary)">OCR thông minh 2 lượt</strong> — chạy ngay trên máy, không cần API key · tự sửa lỗi VIN, lọc nhiễu · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size:9px">Ctrl+V</kbd> dán từ clipboard';
+  }
+}
+
+async function ocrWithClaude(dataURL, apiKey) {
+  // Chuyển dataURL sang base64 thuần (bỏ phần header "data:image/...;base64,")
+  const [header, b64] = dataURL.split(',');
+  const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+
+  const prompt = `Bạn đang xem ảnh Giấy đăng ký xe hoặc Giấy chứng nhận kiểm định an toàn kỹ thuật của Việt Nam.
+
+Hãy trích xuất CHÍNH XÁC các thông tin sau và trả về JSON (chỉ JSON, không thêm gì khác):
+
+{
+  "owner": "Tên chủ xe / tên công ty đầy đủ (in hoa)",
+  "addr": "Địa chỉ đầy đủ",
+  "brand": "Nhãn hiệu xe (chỉ tên hãng: KIA, TOYOTA, HONDA...)",
+  "model": "Số loại / Model code (VD: CARNIVAL, FORTUNER...)",
+  "plate": "Biển số đăng ký (VD: 14H-042.80)",
+  "chassis": "Số khung 17 ký tự VIN",
+  "engine": "Số máy",
+  "year": "Năm sản xuất (4 chữ số)",
+  "country": "Nước sản xuất (VD: Việt Nam, Hàn Quốc)",
+  "transport": "Có hoặc Không (kinh doanh vận tải)",
+  "seats": "Số chỗ ngồi (chỉ số)"
+}
+
+Quy tắc:
+- Nếu không tìm thấy trường nào, để giá trị là null
+- Số khung phải đúng 17 ký tự, sửa lỗi OCR nếu cần (I→1, O→0, Q→0)
+- Trả về JSON hợp lệ, không markdown, không giải thích`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    }),
+    signal: AbortSignal.timeout(30000)
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Claude API error ${resp.status}: ${err}`);
+  }
+
+  const data = await resp.json();
+  const content = data.content?.[0]?.text || '';
+
+  // Parse JSON từ response
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Claude không trả về JSON hợp lệ');
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  // Map sang format extracted của app
+  const extracted = {};
+  if (parsed.owner)     extracted.owner   = String(parsed.owner).toUpperCase().trim();
+  if (parsed.addr)      extracted.addr    = String(parsed.addr).trim();
+  if (parsed.brand)     extracted.brand   = String(parsed.brand).toUpperCase().trim();
+  if (parsed.model)     extracted.model   = String(parsed.model).toUpperCase().trim();
+  if (parsed.plate)     extracted.plate   = String(parsed.plate).toUpperCase().trim();
+  if (parsed.chassis) {
+    const vin = correctVIN(String(parsed.chassis).replace(/\s/g,'').toUpperCase());
+    if (vin.length >= 15) extracted.chassis = vin.substring(0,17);
+  }
+  if (parsed.engine)    extracted.engine  = String(parsed.engine).toUpperCase().trim();
+  if (parsed.year)      extracted.year    = String(parsed.year).replace(/\D/g,'').substring(0,4);
+  if (parsed.country)   extracted.country = String(parsed.country).trim();
+  if (parsed.seats)     extracted.seats   = String(parsed.seats).replace(/\D/g,'');
+  if (parsed.transport) {
+    const t = String(parsed.transport).toLowerCase();
+    extracted.transport = (t.includes('có') || t === 'true' || t === '1') ? 'Có' : 'Không';
+  }
+
+  return extracted;
+}
+
+// ============================================================
+// IMAGE PREPROCESSING — 2 biến thể cho OCR best-of-2
+// ============================================================
+function loadScaledGray(dataURL, minDim = 2000) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.max(1, Math.ceil(minDim / Math.max(img.width, img.height)));
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width  * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
+      const n = d.length / 4;
+      const gray = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        // Giảm trọng số kênh đỏ — làm mờ dấu mộc đỏ trên giấy đăng ký, giữ chữ đen/xanh
+        gray[i] = Math.round(0.15 * d[i*4] + 0.55 * d[i*4+1] + 0.30 * d[i*4+2]);
+      }
+      resolve({ canvas, ctx, imageData, gray, n });
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataURL;
+  });
+}
+
+// Biến thể A — "mềm": grayscale + kéo giãn tương phản theo percentile.
+// Giữ được nét chữ nằm dưới dấu mộc / watermark mà nhị phân hoá thường phá hỏng.
+async function preprocessSoft(dataURL) {
+  const r = await loadScaledGray(dataURL);
+  if (!r) return dataURL;
+  const { canvas, ctx, imageData, gray, n } = r;
+  const d = imageData.data;
+
+  // Tìm ngưỡng percentile 2% và 98%
+  const hist = new Int32Array(256);
+  for (let i = 0; i < n; i++) hist[gray[i]]++;
+  let lo = 0, hi = 255, acc = 0;
+  const loTarget = n * 0.02, hiTarget = n * 0.98;
+  for (let t = 0; t < 256; t++) { acc += hist[t]; if (acc >= loTarget) { lo = t; break; } }
+  acc = 0;
+  for (let t = 0; t < 256; t++) { acc += hist[t]; if (acc >= hiTarget) { hi = t; break; } }
+  const range = Math.max(1, hi - lo);
+
+  for (let i = 0; i < n; i++) {
+    const v = Math.max(0, Math.min(255, Math.round(((gray[i] - lo) / range) * 255)));
+    d[i*4] = d[i*4+1] = d[i*4+2] = v;
+    d[i*4+3] = 255;
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png', 0.95);
+}
+
+// Biến thể B — "cứng": nhị phân hoá Otsu (chữ đen / nền trắng).
+// Tốt cho ảnh chụp đều sáng, scan rõ nét.
+async function preprocessBinary(dataURL) {
+  const r = await loadScaledGray(dataURL);
+  if (!r) return dataURL;
+  const { canvas, ctx, imageData, gray, n } = r;
+  const d = imageData.data;
+
+  const hist = new Int32Array(256);
+  for (let i = 0; i < n; i++) hist[gray[i]]++;
+  let total = n, sum = 0;
+  for (let t = 0; t < 256; t++) sum += t * hist[t];
+  let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t];
+    if (!wB) continue;
+    const wF = total - wB;
+    if (!wF) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const v = wB * wF * (mB - mF) ** 2;
+    if (v > maxVar) { maxVar = v; threshold = t; }
+  }
+
+  let lightCount = 0;
+  for (let i = 0; i < n; i++) if (gray[i] > threshold) lightCount++;
+  const bgIsLight = lightCount > n * 0.5;
+
+  for (let i = 0; i < n; i++) {
+    const isText = bgIsLight ? gray[i] <= threshold : gray[i] > threshold;
+    const val = isText ? 0 : 255;
+    d[i*4] = d[i*4+1] = d[i*4+2] = val;
+    d[i*4+3] = 255;
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png', 0.95);
+}
+
+// ============================================================
+// VIN CHECKSUM (ISO 3779) — chỉ dùng làm tín hiệu DƯƠNG khi chấm điểm
+// (VIN thị trường châu Á không bắt buộc check digit nên không dùng để loại)
+// ============================================================
+function vinValid(vin) {
+  if (!vin || vin.length !== 17 || /[IOQ]/.test(vin)) return false;
+  const map = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,J:1,K:2,L:3,M:4,N:5,P:7,R:9,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9};
+  const weights = [8,7,6,5,4,3,2,10,0,9,8,7,6,5,4,3,2];
+  let sum = 0;
+  for (let i = 0; i < 17; i++) {
+    const c = vin[i];
+    const v = /\d/.test(c) ? +c : map[c];
+    if (v === undefined) return false;
+    sum += v * weights[i];
+  }
+  const r = sum % 11;
+  return vin[8] === (r === 10 ? 'X' : String(r));
+}
+
+// Lọc văn bản theo confidence từng từ — loại rác nhưng giữ nguyên cấu trúc dòng
+function textFromWords(data, minConf = 30) {
+  try {
+    if (!data.lines || !data.lines.length) return data.text || '';
+    return data.lines
+      .map(line => (line.words || []).filter(w => w.confidence >= minConf).map(w => w.text).join(' '))
+      .filter(Boolean)
+      .join('\n');
+  } catch (e) { return data.text || ''; }
+}
+
+// Chấm điểm kết quả trích xuất — càng nhiều trường hợp lệ càng cao
+function scoreExtraction(ext) {
+  let score = 0;
+  const WEIGHTS = { plate:2, chassis:2, owner:1.5, brand:1, model:1, engine:1, year:1, addr:1, seats:0.5, country:0.5 };
+  Object.entries(WEIGHTS).forEach(([k, w]) => { if (ext[k]) score += w; });
+  if (ext.chassis && vinValid(ext.chassis)) score += 2;                       // VIN qua checksum
+  if (ext.plate && /^\d{2}[A-Z]{1,2}\d?-\d{3}\.\d{2}$/.test(ext.plate)) score += 1; // biển số đúng chuẩn
+  if (ext.year && +ext.year >= 1990 && +ext.year <= new Date().getFullYear() + 1) score += 0.5;
+  return score;
+}
+
+// ============================================================
+// OCR THÔNG MINH KHÔNG CẦN API KEY — best-of-2 passes
+// Lượt 1: ảnh mềm (giữ chữ dưới mộc đỏ) → nếu đủ tốt thì dừng
+// Lượt 2: ảnh nhị phân Otsu → hợp nhất trường tốt nhất của cả 2 lượt
+// ============================================================
+async function ocrSmart(dataURL, onProgress) {
+  const passes = [
+    { name: 'tương phản mềm', prep: preprocessSoft },
+    { name: 'nhị phân Otsu',  prep: preprocessBinary },
+  ];
+  const GOOD_ENOUGH = 9; // đủ trường + VIN hợp lệ → bỏ qua lượt 2
+  let best = {}, bestScore = -1;
+  const texts = [];
+
+  for (let p = 0; p < passes.length; p++) {
+    const base = p * 50;
+    onProgress(base + 2, `tiền xử lý (${passes[p].name})...`);
+    const src = await passes[p].prep(dataURL);
+
+    const result = await Tesseract.recognize(src, 'vie+eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          onProgress(base + 5 + m.progress * 40, `lượt ${p+1}/2 (${passes[p].name}): ${Math.round(m.progress*100)}%`);
+        }
+      }
+    });
+
+    // Parse bản đã lọc confidence trước; trường thiếu thì bù từ bản thô
+    const cleanText = textFromWords(result.data, 30);
+    const rawText   = result.data.text || '';
+    texts.push(`=== Lượt ${p+1} (${passes[p].name}) ===\n` + rawText);
+
+    const extClean = parseOCRText(cleanText);
+    const extRaw   = parseOCRText(rawText);
+    const ext = { ...extRaw, ...extClean }; // ưu tiên bản sạch, bù bằng bản thô
+
+    const score = scoreExtraction(ext);
+    if (score > bestScore) {
+      // Hoán đổi: kết quả mới tốt hơn làm nền, bù trường thiếu từ kết quả cũ
+      best = { ...best, ...ext };
+      bestScore = score;
+    } else {
+      // Kết quả cũ vẫn tốt hơn — chỉ bù trường còn thiếu
+      Object.entries(ext).forEach(([k, v]) => { if (v && !best[k]) best[k] = v; });
+    }
+    // Riêng số khung: luôn ưu tiên bản qua được checksum VIN
+    if (ext.chassis && vinValid(ext.chassis) && !vinValid(best.chassis || '')) best.chassis = ext.chassis;
+
+    if (bestScore >= GOOD_ENOUGH) break; // đủ tốt, không cần lượt 2
+  }
+
+  window._ocrRawTexts = (window._ocrRawTexts || []).concat(texts);
+  return best;
+}
+
+// ============================================================
+// OCR FUNCTIONALITY — MULTI-FILE
+// ============================================================
+function handleDragOver(e) {
+  e.preventDefault();
+  $('ocrZone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  $('ocrZone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  $('ocrZone').classList.remove('drag-over');
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) processOCRFiles(files);
+}
+function handleFileSelect(e) {
+  const files = [...e.target.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) processOCRFiles(files);
+  e.target.value = '';
+}
+
+// Clipboard paste (Ctrl+V)
+document.addEventListener('paste', function(e) {
+  const items = e.clipboardData.items;
+  for (let item of items) {
+    if (item.type.startsWith('image/')) {
+      processOCRFiles([item.getAsFile()]);
+      break;
+    }
+  }
+});
+
+function fileToDataURL(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processOCRFiles(files) {
+  const strip = $('ocrPreviewStrip');
+  strip.style.display = 'flex';
+  strip.innerHTML = '';
+
+  // Build thumbnails for all files
+  const previews = await Promise.all(files.map(fileToDataURL));
+  previews.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'height:64px;border-radius:6px;border:1px solid var(--border);object-fit:cover;opacity:0.5;transition:opacity .3s';
+    img.id = `thumb_${i}`;
+    strip.appendChild(img);
+  });
+
+  // Update zone to processing state
+  $('ocrZone').innerHTML = `
+    <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+    <div class="ocr-icon">⏳</div>
+    <div class="ocr-title">Đang xử lý <span id="ocrFileCounter">0/${files.length}</span> ảnh...</div>
+    <div class="ocr-sub">Nhận dạng tuần tự từng ảnh để trích xuất thông tin</div>
+  `;
+
+  const wrap = $('ocrProgressWrap');
+  wrap.classList.add('show');
+  $('ocrResultTags').innerHTML = '';
+  const apiKey = getApiKey();
+  const useClaudeVision = !!apiKey;
+  setOCRProgress(0, useClaudeVision ? 'Chuẩn bị gửi ảnh đến Claude Vision...' : 'Chuẩn bị OCR (Tesseract)...');
+
+  let merged = {};
+
+  for (let i = 0; i < files.length; i++) {
+    const pct0 = (i / files.length) * 100;
+    const pct1 = ((i + 1) / files.length) * 100;
+
+    $('ocrFileCounter') && ($('ocrFileCounter').textContent = `${i+1}/${files.length}`);
+    const thumb = $(`thumb_${i}`);
+    if (thumb) thumb.style.opacity = '1';
+
+    setOCRProgress(pct0, `Ảnh ${i+1}/${files.length}: đang nhận dạng...`);
+
+    try {
+      let extracted = {};
+
+      if (useClaudeVision) {
+        // ── Claude Vision API (chính xác hơn) ──────────────────────────────
+        setOCRProgress(pct0 + 10, `Ảnh ${i+1}/${files.length}: gửi đến Claude Vision...`);
+        extracted = await ocrWithClaude(previews[i], apiKey);
+        setOCRProgress(pct1 - 5, `Ảnh ${i+1}/${files.length}: nhận kết quả Claude...`);
+      } else {
+        // ── OCR thông minh không cần API key: best-of-2 passes ─────────────
+        if (typeof Tesseract === 'undefined') throw new Error('Tesseract not loaded');
+        extracted = await ocrSmart(previews[i], (p, msg) => {
+          setOCRProgress(pct0 + (p / 100) * (pct1 - pct0), `Ảnh ${i+1}/${files.length}: ${msg}`);
+        });
+      }
+
+      // Merge: only fill if not already filled by a previous image
+      Object.entries(extracted).forEach(([k, v]) => {
+        if (v && !merged[k]) merged[k] = v;
+      });
+      // Số khung: ưu tiên bản qua được checksum VIN giữa các ảnh
+      if (extracted.chassis && vinValid(extracted.chassis) && !vinValid(merged.chassis || '')) {
+        merged.chassis = extracted.chassis;
+      }
+
+      if (thumb) thumb.style.border = '1px solid var(--accent)';
+    } catch(err) {
+      console.warn('OCR error image', i, err);
+      if (thumb) thumb.style.border = '1px solid var(--danger)';
+    }
+  }
+
+  setOCRProgress(100, `Hoàn thành ${files.length} ảnh — đang phân tích...`);
+  fillFromOCR(merged);
+
+  // Restore zone
+  $('ocrZone').innerHTML = `
+    <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+    <div class="ocr-icon">✅</div>
+    <div class="ocr-title">Đã xử lý ${files.length} ảnh</div>
+    <div class="ocr-sub">Kiểm tra và chỉnh sửa các trường bên dưới nếu cần</div>
+    <div class="ocr-btns" onclick="event.stopPropagation()">
+      <button class="btn btn-ghost btn-sm" onclick="resetOCRZone()">↺ Tải ảnh khác</button>
+    </div>
+  `;
+}
+
+function setOCRProgress(pct, label) {
+  $('ocrProgressBar').style.width = pct + '%';
+  $('ocrProgressLabel').textContent = label;
+  $('ocrProgressPct').textContent = Math.round(pct) + '%';
+}
+
+// ============================================================
+// OCR POST-CORRECTION — sửa lỗi ký tự phổ biến
+// ============================================================
+function correctVIN(raw) {
+  if (!raw) return raw;
+  let s = raw.replace(/\s/g, '').toUpperCase().substring(0, 17);
+  // Loại bỏ ký tự không hợp lệ trong VIN: chỉ giữ A-Z (trừ I,O,Q) và 0-9
+  // Nhưng trước tiên sửa các lỗi phổ biến
+  const fix = (c, pos) => {
+    // Các vị trí chỉ là số: pos 9 (check digit), 12-17 (sequence)
+    const mustDigit = pos === 8 || pos >= 11;
+    if (mustDigit) {
+      if (c === 'O' || c === 'Q') return '0';
+      if (c === 'I' || c === 'L') return '1';
+      if (c === 'Z') return '2';
+      if (c === 'S') return '5';
+      if (c === 'B') return '8';
+      if (c === 'G') return '6';
+      if (c === 'T') return '7';
+    }
+    // Toàn bộ VIN: loại I, O, Q (không được phép trong VIN chuẩn)
+    if (c === 'O') return '0';
+    if (c === 'I') return '1';
+    if (c === 'Q') return '0';
+    return c;
+  };
+  return s.split('').map((c, i) => fix(c, i)).join('');
+}
+
+// Levenshtein distance đơn giản để fuzzy-match tên model
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => Array.from({length: n+1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+const KNOWN_MODELS = [
+  'CARNIVAL','SORENTO','SELTOS','SPORTAGE','CERATO','MORNING','SOLUTO',
+  'FORTUNER','CAMRY','COROLLA','VIOS','INNOVA','HILUX','RUSH',
+  'CR-V','CITY','CIVIC','HR-V','ACCORD','JAZZ','BRIO',
+  'SANTA FE','TUCSON','ACCENT','ELANTRA','IONIQ',
+  'RANGER','EVEREST','TERRITORY','TRANSIT','EXPLORER',
+  'CX-5','CX-8','CX-3','MAZDA3','MAZDA6',
+  'XFORCE','OUTLANDER','PAJERO','ECLIPSE CROSS',
+  'VF8','VF9','VF6','VF5','VF3',
+  'ALMAZ','CONFERO','CORTEZ',
+];
+
+function fuzzyModel(raw) {
+  if (!raw) return raw;
+  const u = raw.toUpperCase().trim();
+  // Exact match first
+  if (KNOWN_MODELS.includes(u)) return u;
+  // Fuzzy match: tìm model có khoảng cách Levenshtein nhỏ nhất
+  let best = null, bestDist = Infinity;
+  for (const m of KNOWN_MODELS) {
+    const dist = levenshtein(u, m);
+    const maxLen = Math.max(u.length, m.length);
+    // Chấp nhận nếu độ tương đồng > 75%
+    if (dist < bestDist && dist <= Math.ceil(maxLen * 0.25)) {
+      bestDist = dist; best = m;
+    }
+  }
+  return best || raw;
+}
+
+function parseOCRText(text) {
+  const extracted = {};
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const full = text.toUpperCase();
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  // Strip ký tự rác OCR phổ biến từ chuỗi số/mã
+  function stripNoise(s) {
+    return s.replace(/[®©°!\?\,\:\;\=\(\)\[\]\{\}\|\\\/"'`~@#$%^&*]/g, '').replace(/\s+/g,'').trim();
+  }
+
+  // Lấy phần sau nhãn trên CÙNG DÒNG (sau dấu : hoặc ))
+  function sameLineVal(line, pat) {
+    return line.replace(pat, '').replace(/^[\s:()\-–\/|]+/, '').trim();
+  }
+
+  // Lấy DÒNG TIẾP THEO sau dòng khớp pattern (không lấy cùng dòng)
+  function nextLine(pat) {
+    for (let i = 0; i < lines.length; i++) {
+      if (pat.test(lines[i]) && i + 1 < lines.length) {
+        return lines[i + 1].trim();
+      }
+    }
+    return null;
+  }
+
+  // Lấy giá trị: thử cùng dòng trước, nếu quá ngắn/rác → thử dòng tiếp theo
+  function getVal(pat, minLen = 3) {
+    for (let i = 0; i < lines.length; i++) {
+      if (!pat.test(lines[i])) continue;
+      const same = sameLineVal(lines[i], pat);
+      if (same.length >= minLen) return same;
+      if (i + 1 < lines.length) return lines[i + 1].trim();
+    }
+    return null;
+  }
+
+  // Làm sạch: bỏ cụm tiếng Anh trong ngoặc, ký tự đầu dòng thừa
+  function cleanVal(s) {
+    if (!s) return '';
+    s = s.replace(/\([^)]{0,80}\)/g, '').trim();        // bỏ "(Owner's full name)" v.v.
+    s = s.replace(/\b(owner|address|code|number|name|full|type|none|rt|su|kẻ)\b/gi, '').trim();
+    s = s.replace(/^[\s:;.,\-–\/\\|"']+/, '').trim();
+    return s;
+  }
+
+  function isValidName(s) {
+    if (!s || s.length < 4) return false;
+    if (/[()[\]0-9@#$%*]/.test(s)) return false;
+    return s.trim().split(/\s+/).length >= 2;
+  }
+
+  function isValidAddr(s) {
+    if (!s || s.length < 10) return false;
+    if (/^[\s\d:;\-–"'.,()]+$/.test(s)) return false;   // toàn ký tự đặc biệt
+    if (/^["':;\-–(]/.test(s)) return false;             // bắt đầu bằng dấu câu
+    if (!s.includes(' ')) return false;
+    return true;
+  }
+
+  // ── Biển số ───────────────────────────────────────────────────────────────
+  // Hỗ trợ: 14A-894.22, 14H-042.80, 14A1-123.45, 51G-12345, 29LD-12345
+  const platePats = [
+    /\b(\d{2}[A-Z]{1,2}\d[-–.]\d{3}[.\-]\d{2,3})\b/i,   // 14A1-894.22, 14AB1-042.80
+    /\b(\d{2}[A-Z]{1,2}[-–.]\d{3}[.\-]\d{2,3})\b/i,      // 14A-894.22, 14H-042.80
+    /\b(\d{2}[A-Z]{1,2}\d?[-–.]\d{5})\b/i,               // 51G1-12345
+  ];
+  for (const pp of platePats) {
+    const m = text.match(pp);
+    if (m) {
+      extracted.plate = m[1].toUpperCase().replace(/–/g, '-');
+      break;
+    }
+  }
+
+  // ── Số khung (VIN 17 ký tự) ──────────────────────────────────────────────
+  // Ưu tiên: sau nhãn "Số khung" / "Chassis No"
+  // Cấu trúc giấy kiểm định: "Số khung (Chassis No): RNYND5BA8PC321432" — rõ ràng
+  // Cấu trúc đăng ký: có thể bị dấu mộc che → Tesseract đọc sai
+  // Pattern mở rộng: chấp nhận cả ký tự bị OCR sai (S thay 5, V thay Y...) → correctVIN xử lý sau
+  const chassisPat = /(?:số\s*khung|chassis\s*(?:n[o°º]\.?|number)?|s[oố]\s*khung)[:\s).('"]+([A-Z0-9][\sA-Z0-9]{14,22})/i;
+  let chassisVal = null;
+  const cm = text.match(chassisPat);
+  if (cm) {
+    // Lấy 17 ký tự đầu, bỏ ký tự rác (dấu câu, khoảng trắng)
+    chassisVal = cm[1].replace(/[^A-Z0-9]/gi, '').toUpperCase().substring(0, 17);
+  }
+  if (!chassisVal || chassisVal.length < 15) {
+    // Fallback: chuỗi 15-17 ký tự liền mạch trông giống VIN
+    const raw = text.match(/\b([A-Z0-9]{15,17})\b/i);
+    if (raw) chassisVal = raw[1].replace(/[^A-Z0-9]/gi, '').toUpperCase().substring(0, 17);
+  }
+  if (chassisVal) {
+    // Thử sửa lỗi OCR trước khi kiểm tra độ dài
+    const fixed = correctVIN(chassisVal);
+    if (fixed.length === 17) extracted.chassis = fixed;
+    else if (chassisVal.length === 17) extracted.chassis = chassisVal; // giữ nguyên nếu không sửa được
+  }
+
+  // ── Số máy ────────────────────────────────────────────────────────────────
+  // Giấy đăng ký:  "Số máy (Engine N°): D4HEPH601440"
+  // Giấy kiểm định:"Số động cơ (Engine No): D4HEPH601440"
+  const enginePat = /(?:số\s*(?:máy|động\s*cơ)|engine\s*(?:n[o°º]\.?|number)?|động\s*cơ\s*(?:n[o°º]\.?)?)[:\s).(]+([A-Z0-9][A-Z0-9\s\-®©°]{3,25})/i;
+  const em = text.match(enginePat);
+  if (em) {
+    const ev = stripNoise(em[1]);
+    if (ev.length >= 4 && !/^(number|code|type)$/i.test(ev)) extracted.engine = ev.toUpperCase();
+  }
+
+  // ── Năm sản xuất ──────────────────────────────────────────────────────────
+  // Giấy kiểm định: "Năm, Nước sản xuất: 2023, Việt Nam"
+  // Giấy đăng ký:   "Năm sản xuất: 2023" hoặc không có nhãn, năm nằm trong nội dung
+  const yearPats = [
+    /(?:năm[,\s]*(?:nước\s*)?sản\s*xuất|năm\s*(?:sx|chế\s*tạo)|production\s*year|model\s*year|year\s*of\s*(?:mfg|manufacture))[:\s,]*(\d{4})/i,
+    /(?:năm\s*sx)[:\s]*(\d{4})/i,
+  ];
+  let yearFound = false;
+  for (const yp of yearPats) {
+    const ym = text.match(yp);
+    if (ym) { extracted.year = ym[1]; yearFound = true; break; }
+  }
+  if (!yearFound) {
+    // Fallback: năm 4 chữ số hợp lệ, loại bỏ vùng "hết hạn/hiệu lực đến"
+    const curY = new Date().getFullYear();
+    const textClean = text.replace(/(?:hết\s*hạn|hiệu\s*lực\s*đến|valid\s*until|expire)[^\n]*/gi, '');
+    const years = [...textClean.matchAll(/(?<!\d)((?:19[89]\d|20[0-3]\d))(?!\d)/g)]
+      .map(m => parseInt(m[1])).filter(y => y >= 1990 && y <= curY + 1);
+    if (years.length) extracted.year = String(years[0]);
+  }
+
+  // ── Chủ xe ────────────────────────────────────────────────────────────────
+  // Cấu trúc thực tế: nhãn trên 1 dòng, tên trên dòng TIẾP THEO
+  // "Tên chủ xe(Owner's full name):"  →  dòng sau: "CÔNG TY TNHH PHÚC XUYÊN"
+  const ownerLabelPat = /tên\s*chủ\s*xe|họ\s*(?:và\s*)?tên|chủ\s*phương\s*tiện|owner(?:'s)?\s*(?:full\s*)?name/i;
+  // Thử 1: cùng dòng sau nhãn
+  const ownerSameLine = getVal(ownerLabelPat, 5);
+  if (ownerSameLine) {
+    const v = cleanVal(ownerSameLine).replace(/\s{2,}/g, ' ');
+    if (isValidName(v)) extracted.owner = v.toUpperCase();
+  }
+  // Thử 2: luôn thử dòng tiếp theo (cấu trúc 2-dòng phổ biến)
+  if (!extracted.owner) {
+    const nl = nextLine(ownerLabelPat);
+    if (nl) {
+      const v = cleanVal(nl).replace(/^[\|\s]+/, '').replace(/\s{2,}/g, ' ').trim();
+      // Lấy tối đa 6 từ đầu (tên công ty có thể dài)
+      const words = v.split(/\s+/).slice(0, 6);
+      const name = words.join(' ');
+      if (isValidName(name)) extracted.owner = name.toUpperCase();
+    }
+  }
+  // Thử 3: dòng IN HOA hoàn toàn gần đầu văn bản (tên công ty / cá nhân)
+  if (!extracted.owner) {
+    const BLACKLIST = /^(CHỦ XE|BIỂN SỐ|SỐ KHUNG|SỐ MÁY|ĐỊA CHỈ|NĂM SX|HÃNG XE|LOẠI XE|HỌ VÀ TÊN|NHÃN HIỆU|KIỂU LOẠI|MÀU SƠN|ĐĂNG KÝ|CHỨNG NHẬN|TRỌNG TẢI)$/;
+    for (const line of lines.slice(0, 30)) {
+      const t = line.replace(/^[\|\s]+/, '').trim();
+      if (t.length < 5 || t.length > 60) continue;
+      if (BLACKLIST.test(t)) continue;
+      if (t === t.toUpperCase() && /^[A-ZĐÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚƯĂẮẶẦẤỂỆỊỢỤỪỰỲỶỸ\s]{5,60}$/.test(t)) {
+        const parts = t.split(/\s+/);
+        if (parts.length >= 2 && parts.length <= 7) { extracted.owner = t; break; }
+      }
+    }
+  }
+
+  // ── Địa chỉ ──────────────────────────────────────────────────────────────
+  // Cấu trúc 2-dòng: "Địa chỉ (Address):" → dòng sau: "Tổ 7, Khu 1, Yên Thanh..."
+  const addrLabelPat = /địa\s*chỉ|address|nơi\s*đăng\s*ký/i;
+  // Thử cùng dòng trước
+  const addrSame = getVal(addrLabelPat, 10);
+  if (addrSame) {
+    const v = cleanVal(addrSame);
+    if (isValidAddr(v)) extracted.addr = v.replace(/\s{2,}/g,' ');
+  }
+  // Luôn thử dòng tiếp theo nếu chưa có hoặc cùng dòng quá ngắn
+  if (!extracted.addr) {
+    const nl = nextLine(addrLabelPat);
+    if (nl) {
+      const v = cleanVal(nl.replace(/^[\|\s]+/, ''));
+      if (isValidAddr(v)) extracted.addr = v.replace(/\s{2,}/g,' ');
+    }
+  }
+
+  // ── Nhãn hiệu / Hãng xe ──────────────────────────────────────────────────
+  const brands = ['MITSUBISHI','TOYOTA','HONDA','FORD','HYUNDAI','KIA','MAZDA','SUZUKI','NISSAN','BMW','MERCEDES','AUDI','CHEVROLET','VINFAST','ISUZU','HINO','SUBARU','LEXUS','VOLVO','LAND ROVER','JEEP'];
+  // Giấy kiểm định: "Nhãn hiệu, tên thương mại: KIA CARNIVAL"
+  const brandPat = /(?:nhãn\s*hiệu(?:\s*,\s*tên\s*thương\s*mại)?|hãng\s*xe|thương\s*hiệu|brand)[:\s]+([A-Z][A-Za-z\s\-]{1,25})/i;
+  const bm = text.match(brandPat);
+  if (bm) {
+    const candidate = bm[1].trim().toUpperCase();
+    const found = brands.find(b => candidate.startsWith(b));
+    if (found) extracted.brand = found;
+  }
+  if (!extracted.brand) {
+    for (const b of brands) { if (full.includes(b)) { extracted.brand = b; break; } }
+  }
+
+  // ── Model / Mã kiểu loại ─────────────────────────────────────────────────
+  // Giấy đăng ký:   "Số loại(Model code): CARNIVAL"
+  // Giấy kiểm định: "Mã kiểu loại (Model code): KA4 2.2 AT FL8"
+  const modelPats = [
+    /(?:mã\s*kiểu\s*loại|model\s*code)[:\s()A-Za-z]{0,20}([A-Z][A-Z0-9][A-Z0-9\s\.\-]{1,25})/i,
+    /(?:số\s*loại)[:\s()A-Za-z]{0,15}([A-Z][A-Z0-9\-\.]{2,20})/i,
+    /(?:kiểu\s*(?:loại|xe))[:\s]+([A-Z0-9][A-Z0-9\s\-\.]{2,25})/i,
+  ];
+  for (const mp of modelPats) {
+    const mm = text.match(mp);
+    if (mm) {
+      // Giữ tối đa 3 từ đầu (KA4 2.2 AT → "KA4 2.2 AT")
+      const val = mm[1].trim().split(/\s+/).slice(0, 3).join(' ').toUpperCase();
+      if (val.length >= 2) { extracted.model = fuzzyModel(val); break; }
+    }
+  }
+
+  // ── Số chỗ ngồi ──────────────────────────────────────────────────────────
+  // "Số chỗ ngồi (Seats): 8" hoặc "chỗ ngồi đến 8 chỗ"
+  const seatsM = text.match(/(?:số\s*chỗ\s*(?:ngồi)?|seats)[^0-9]{0,30}(\d{1,2})\b/i)
+    || text.match(/(?:chở\s*người\s*đến|đến)\s*(\d{1,2})\s*chỗ/i);
+  if (seatsM) extracted.seats = seatsM[1];
+
+  // ── Nước sản xuất ────────────────────────────────────────────────────────
+  // "Năm, Nước sản xuất: 2023, Việt Nam"
+  const countryM = text.match(/(?:năm[,\s]*nước\s*sản\s*xuất|country\s*of\s*(?:mfg|manufacture))[:\s,]*\d{4}[,\s]+([A-Za-zÀ-ỹ\s]{3,30})/i);
+  if (countryM) extracted.country = countryM[1].trim().replace(/\s+/g,' ');
+
+  // ── Kinh doanh vận tải ───────────────────────────────────────────────────
+  // Giấy đăng ký có ô "Kinh doanh vận tải" với dấu X hoặc check
+  const transportSection = text.match(/kinh\s*doanh\s*vận\s*tải[^\n]{0,60}/i);
+  if (transportSection) {
+    const seg = transportSection[0];
+    // Có dấu X, ✓, ✅, checkbox đánh dấu → kinh doanh vận tải = có
+    extracted.transport = /[xX✓✅☑]/.test(seg.replace(/kinh\s*doanh\s*vận\s*tải/i,'').slice(0,20)) ? 'Có' : 'Không';
+  }
+
+  return extracted;
+}
+
+// Đoán loại xe từ số chỗ + KL toàn bộ
+function guessVehicleType(seats, weight, brand) {
+  const s = parseInt(seats) || 0;
+  const b = (brand || '').toUpperCase();
+  if (b.includes('HINO'))   return { id:'8', label:'Xe tải HINO' };
+  if (b.includes('ISUZU'))  return { id:'8', label:'Xe tải Isuzu' };
+  if (s >= 2  && s <= 9)   return { id:'1', label:'Xe con ≤9 chỗ' };
+  if (s >= 10 && s <= 16)  return { id:'4', label:'Xe khách >9 chỗ' };
+  if (s > 16)               return { id:'7', label:'Xe khách liên tỉnh' };
+  return null;
+}
+
+// Các trường hiển thị trong bảng xe — thứ tự cố định
+const VIT_FIELDS = [
+  { key: 'owner',   id: 'f_owner',   label: 'Tên chủ xe' },
+  { key: 'addr',    id: 'f_addr',    label: 'Địa chỉ' },
+  { key: 'brand',   id: 'f_brand',   label: 'Nhãn hiệu (Brand)' },
+  { key: 'model',   id: 'f_model',   label: 'Số loại (Model code)' },
+  { key: 'plate',   id: 'f_plate',   label: 'Biển số đăng ký' },
+  { key: 'chassis', id: 'f_chassis', label: 'Số khung (Chassis No.)' },
+  { key: 'year',    id: 'f_year',    label: 'Năm sản xuất' },
+  { key: 'country', id: 'f_country', label: 'Nước sản xuất' },
+  { key: 'engine',  id: 'f_engine',  label: 'Số máy' },
+  { key: 'seats',   id: 'f_seats',   label: 'Số chỗ ngồi' },
+];
+
+function renderVehicleTable() {
+  const tbody = $('vitTable');
+  if (!tbody) return;
+  tbody.innerHTML = VIT_FIELDS.map(f => {
+    const val = $(f.id) ? $(f.id).value : '';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px 5px 0;color:var(--text-muted);font-size:10px;white-space:nowrap;width:40%;vertical-align:middle">${f.label}</td>
+      <td style="padding:3px 0">
+        <input type="text" value="${val.replace(/"/g,'&quot;')}"
+          style="width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--text);font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 4px;border-radius:3px;outline:none;cursor:default"
+          onfocus="this.style.borderBottomColor='var(--primary)';this.style.cursor='text';this.style.background='var(--surface2)'"
+          onblur="this.style.borderBottomColor='transparent';this.style.cursor='default';this.style.background='transparent';syncVitField('${f.id}',this.value)"
+          onchange="syncVitField('${f.id}',this.value)"
+          placeholder="Chưa nhận dạng được"
+          title="Click để chỉnh sửa">
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function syncVitField(id, val) {
+  const el = $(id);
+  if (!el) return;
+  el.value = val;
+  if (id === 'f_brand' || id === 'f_year') checkPriceLookup();
+  if (id === 'f_model') onModelInput && onModelInput();
+}
+
+function syncTransport(cb) {
+  $('f_transport').checked = cb.checked;
+  $('f_transport_label').textContent = cb.checked ? 'Có kinh doanh vận tải' : 'Kinh doanh vận tải';
+  $('f_transport_label').style.color = cb.checked ? 'var(--warn)' : 'var(--text-muted)';
+}
+
+function fillFromOCR(extracted) {
+  const fields = VIT_FIELDS;
+  let filledCount = 0;
+
+  fields.forEach(f => {
+    if (extracted[f.key] !== undefined && extracted[f.key] !== null) {
+      $(f.id).value = extracted[f.key];
+      filledCount++;
+    }
+  });
+
+  // Xử lý checkbox kinh doanh vận tải
+  if (extracted.transport) {
+    const isTransport = extracted.transport === 'Có';
+    $('f_transport').checked = isTransport;
+    const vis = $('f_transport_vis');
+    if (vis) { vis.checked = isTransport; syncTransport(vis); }
+    filledCount++;
+  }
+
+  if (filledCount === 0) {
+    $('ocrResultTags').innerHTML = '<span class="ocr-tag miss">Không nhận dạng được — vui lòng nhập thủ công</span>';
+    return;
+  }
+
+  // Ẩn progress tags, hiện bảng thông tin xe
+  $('ocrResultTags').innerHTML = '';
+  renderVehicleTable();
+  $('vehicleInfoTable').style.display = 'block';
+
+  // Auto-detect vehicle type
+  if (!$('f_type').value && (extracted.seats || extracted.weight)) {
+    const typeGuess = guessVehicleType(extracted.seats, extracted.weight, extracted.brand);
+    if (typeGuess) $('f_type').value = typeGuess.id;
+  }
+
+  // Version detection
+  const brand   = $('f_brand').value.trim();
+  const model   = $('f_model').value.trim();
+  const chassis = $('f_chassis').value.trim();
+  const year    = $('f_year').value.trim();
+
+  if (brand && model) {
+    const ver = detectVersion(brand, model, chassis);
+    if (ver) $('f_version').value = ver;
+  }
+
+  // Auto price search
+  if (brand && (model || chassis) && year) {
+    window._autoPrice = null;
+    autoSearchPrice(brand, model, year, $('f_version').value.trim());
+  } else {
+    checkPriceLookup();
+  }
+}
+
+function resetOCRZone() {
+  $('ocrZone').innerHTML = `
+    <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none" onchange="handleFileSelect(event)">
+    <div class="ocr-icon">📷</div>
+    <div class="ocr-title">Kéo thả nhiều ảnh giấy tờ xe vào đây</div>
+    <div id="ocrZoneSub" class="ocr-sub"></div>
+    <div class="ocr-btns" onclick="event.stopPropagation()">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
+      <button class="btn btn-ghost btn-sm" id="btnSetupKey" onclick="event.stopPropagation();toggleApiKeySetup()" style="font-size:10px">🔑 API Key</button>
+    </div>
+  `;
+  updateOcrZoneBadge();
+  $('ocrProgressWrap').classList.remove('show');
+  $('ocrPreviewStrip').style.display = 'none';
+  $('ocrPreviewStrip').innerHTML = '';
+  $('vehicleInfoTable').style.display = 'none';
+  // Xóa dữ liệu các hidden inputs
+  ['f_plate','f_owner','f_addr','f_brand','f_model','f_version','f_chassis','f_engine','f_year','f_seats','f_country'].forEach(id => { $(id).value = ''; });
+  $('f_transport').checked = false;
+  window._ocrRawTexts = [];
+}
+
+// ============================================================
+// VERSION DETECTION
+// ============================================================
+function detectVersion(brand, modelCode, chassis) {
+  const m = (modelCode || '').toUpperCase();
+  const b = (brand || '').toUpperCase();
+  const c = (chassis || '').toUpperCase();
+
+  // Extract transmission
+  let trans = '';
+  if (/\bCVT\b/.test(m)) trans = 'CVT';
+  else if (/\bAT\b|\bAUTO\b|\bATX\b/.test(m)) trans = 'AT';
+  else if (/\bMT\b|\bMTX\b/.test(m)) trans = 'MT';
+
+  // Extract drivetrain
+  let drive = '';
+  if (/\bAWD\b|\b4WD\b|\b4X4\b/.test(m)) drive = '4WD';
+
+  // Extract trim keywords
+  const trimMap = {
+    'ULTIMATE': 'Ultimate', 'PREMIUM': 'Premium', 'LUXURY': 'Luxury',
+    'SPORT': 'Sport', 'EXECUTIVE': 'Executive', 'PRESTIGE': 'Prestige',
+    'ELEGANCE': 'Elegance', 'STANDARD': 'Standard', 'ACTIVE': 'Active',
+    'CONNECT': 'Connect', 'TREND': 'Trend', 'TITANIUM': 'Titanium',
+    'PLATINUM': 'Platinum', 'SIGNATURE': 'Signature', 'PLUS': 'Plus',
+  };
+  let trim = '';
+  for (const [k, v] of Object.entries(trimMap)) {
+    if (m.includes(k)) { trim = v; break; }
+  }
+
+  // Known model code patterns (Vietnamese market)
+  const patterns = [
+    // Mitsubishi
+    { brand:'MITSUBISHI', re:/XFORCE.*CVT.*VVT/i,   ver:'XFORCE CVT Ultimate 2.0' },
+    { brand:'MITSUBISHI', re:/XFORCE.*CVT/i,         ver:'XFORCE CVT Premium' },
+    { brand:'MITSUBISHI', re:/XFORCE.*MT/i,          ver:'XFORCE MT Standard' },
+    { brand:'MITSUBISHI', re:/OUTLANDER.*AWD/i,      ver:'Outlander 2.5 AWD Premium' },
+    { brand:'MITSUBISHI', re:/PAJERO.*AT.*4WD/i,     ver:'Pajero Sport 4x4 AT Premium' },
+    // Toyota
+    { brand:'TOYOTA',    re:/COROLLA.*ALTIS.*18/i,  ver:'Corolla Altis 1.8 CVT' },
+    { brand:'TOYOTA',    re:/CAMRY.*25/i,            ver:'Camry 2.5Q' },
+    { brand:'TOYOTA',    re:/FORTUNER.*AT.*4WD/i,   ver:'Fortuner 2.8 AT 4WD Legender' },
+    { brand:'TOYOTA',    re:/FORTUNER.*AT/i,         ver:'Fortuner 2.4 AT 4x2' },
+    { brand:'TOYOTA',    re:/VIOS.*CVT/i,            ver:'Vios 1.5 CVT' },
+    { brand:'TOYOTA',    re:/INNOVA.*AT/i,           ver:'Innova 2.0 AT' },
+    // Honda
+    { brand:'HONDA',     re:/CR.?V.*AWD/i,           ver:'CR-V 1.5 VTEC Turbo AWD' },
+    { brand:'HONDA',     re:/CR.?V/i,                ver:'CR-V 1.5 VTEC Turbo 2WD' },
+    { brand:'HONDA',     re:/CIVIC.*TURBO/i,         ver:'Civic 1.5 VTEC Turbo RS' },
+    { brand:'HONDA',     re:/CITY.*CVT/i,            ver:'City 1.5 CVT Top' },
+    { brand:'HONDA',     re:/HRV/i,                  ver:'HR-V 1.5L CVT' },
+    // Hyundai
+    { brand:'HYUNDAI',   re:/SANTA.?FE.*AWD/i,      ver:'Santa Fe 2.2 CRDi AWD' },
+    { brand:'TUCSON',    re:/TUCSON.*N.LINE/i,       ver:'Tucson N-Line 2.0' },
+    { brand:'HYUNDAI',   re:/ACCENT.*CVT/i,         ver:'Accent 1.4 AT' },
+    // Kia
+    { brand:'KIA',       re:/SELTOS.*AWD/i,          ver:'Seltos 1.4 Turbo AWD' },
+    { brand:'KIA',       re:/SELTOS/i,               ver:'Seltos 1.5 Deluxe' },
+    { brand:'KIA',       re:/SORENTO.*AWD/i,         ver:'Sorento 2.2 AWD Signature' },
+    { brand:'KIA',       re:/CARNIVAL/i,             ver:'Carnival 2.2 VIP' },
+    // Ford
+    { brand:'FORD',      re:/RANGER.*WILDTRAK.*4X4/i,ver:'Ranger Wildtrak 4x4 Bi-Turbo' },
+    { brand:'FORD',      re:/RANGER.*RAPTOR/i,       ver:'Ranger Raptor V6' },
+    { brand:'FORD',      re:/RANGER/i,               ver:'Ranger XLT 2.0 AT' },
+    { brand:'FORD',      re:/TERRITORY/i,            ver:'Territory 1.5 EcoBoost' },
+    // Mazda
+    { brand:'MAZDA',     re:/CX.?5.*AWD/i,           ver:'CX-5 2.5 AWD Signature' },
+    { brand:'MAZDA',     re:/CX.?5/i,                ver:'CX-5 2.0 Premium' },
+    { brand:'MAZDA',     re:/MAZDA.?3.*SKYACTIV/i,  ver:'Mazda3 1.5L Luxury' },
+    // VinFast
+    { brand:'VINFAST',   re:/VF8.*PLUS/i,            ver:'VF8 Plus' },
+    { brand:'VINFAST',   re:/VF8/i,                  ver:'VF8 Base' },
+    { brand:'VINFAST',   re:/VF9/i,                  ver:'VF9 Plus' },
+    { brand:'VINFAST',   re:/VF6/i,                  ver:'VF6 Plus' },
+  ];
+
+  for (const p of patterns) {
+    if (b.includes(p.brand) && p.re.test(m + ' ' + c)) return p.ver;
+  }
+
+  // Generic fallback: combine base model + detected attributes
+  const baseModel = (modelCode || '').split(/\s/)[0];
+  const parts = [baseModel, trans, drive, trim].filter(Boolean);
+  return parts.length > 1 ? parts.join(' ') : '';
+}
+
+// ============================================================
+// NÚT TRA GIÁ TRỊ XE — tự động điền vào f_value
+// ============================================================
+async function traGiaTriXe() {
+  const brand   = $('f_brand').value.trim();
+  const model   = $('f_model').value.trim();
+  const year    = $('f_year').value.trim();
+  const version = $('f_version').value.trim();
+
+  if (!brand && !model) {
+    toast('Vui lòng nhập hoặc OCR thông tin Hãng xe và Model trước', 'warn');
+    return;
+  }
+
+  const btn = $('btnTraGia');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tra cứu...';
+
+  await autoSearchPrice(brand || model, model || brand, year || new Date().getFullYear(), version, true);
+
+  btn.disabled = false;
+  btn.textContent = '💹 Tra giá trị xe thị trường';
+}
+
+// ============================================================
+// AUTO PRICE SEARCH
+// ============================================================
+
+// Fetch JSON xuyên CORS: thử trực tiếp → r.jina.ai → allorigins
+// (gateway.chotot.com KHÔNG trả CORS header nên trình duyệt chặn fetch trực tiếp;
+//  r.jina.ai bọc JSON sau dòng "Markdown Content:" → cắt từ '{' đầu đến '}' cuối)
+async function fetchJSONWithProxy(url, onStatus) {
+  // 1. Trực tiếp (phòng khi nguồn bật CORS trong tương lai)
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(7000) });
+    if (r.ok) return await r.json();
+  } catch (e) { /* bị CORS chặn — chuyển proxy */ }
+
+  // 2. r.jina.ai — proxy đọc nội dung, có CORS, miễn phí
+  try {
+    onStatus && onStatus('qua proxy r.jina.ai...');
+    const r = await fetch('https://r.jina.ai/' + url, { signal: AbortSignal.timeout(20000) });
+    if (r.ok) {
+      const text = await r.text();
+      const s = text.indexOf('{'), e = text.lastIndexOf('}');
+      if (s >= 0 && e > s) return JSON.parse(text.substring(s, e + 1));
+    }
+  } catch (e) { /* tiếp tục */ }
+
+  // 3. allorigins — dự phòng khi jina quá tải
+  try {
+    onStatus && onStatus('qua proxy allorigins...');
+    const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { signal: AbortSignal.timeout(15000) });
+    if (r.ok) return await r.json();
+  } catch (e) { /* hết nguồn */ }
+
+  return null;
+}
+
+// Năm sản xuất của tin rao: ưu tiên field year, fallback đọc từ tiêu đề tin
+function adYear(a) {
+  const y = parseInt(a.year);
+  if (y >= 1990) return y;
+  const m = String(a.subject || '').match(/\b(20[0-3]\d)\b/);
+  return m ? parseInt(m[1]) : null;
+}
+
+function calcIQRMedian(prices) {
+  if (!prices.length) return null;
+  const sorted = [...prices].sort((a, b) => a - b);
+  // Bỏ 10% ngoại lệ hai đầu trước khi lấy min/max
+  const cut = Math.max(1, Math.floor(sorted.length * 0.10));
+  const trimmed = sorted.length >= 6 ? sorted.slice(cut, sorted.length - cut) : sorted;
+  const min = trimmed[0];
+  const max = trimmed[trimmed.length - 1];
+  const avg = Math.round((min + max) / 2);
+  return { median: avg, min: sorted[0], max: sorted[sorted.length-1], count: sorted.length };
+}
+
+// Trích tên model từ VIN (positions 4-8): dành riêng cho các WMI phổ biến tại VN
+function modelFromChassis(chassis, brand) {
+  if (!chassis || chassis.length < 8) return '';
+  const vds = chassis.substring(3, 8).toUpperCase(); // positions 4-8 (0-indexed: 3-7)
+  const b = (brand || '').toUpperCase();
+  // Kia Carnival: WMI RNY, VDS bắt đầu ND5
+  if (b.includes('KIA') && vds.startsWith('ND5')) return 'CARNIVAL';
+  if (b.includes('KIA') && vds.startsWith('JD5')) return 'SORENTO';
+  if (b.includes('KIA') && vds.startsWith('SP2')) return 'SELTOS';
+  if (b.includes('KIA') && vds.startsWith('BP2')) return 'MORNING';
+  if (b.includes('HYUNDAI') && vds.startsWith('KM8')) return 'SANTA FE';
+  if (b.includes('TOYOTA') && /^JTD/.test(vds)) return 'FORTUNER';
+  if (b.includes('MITSUBISHI') && /^MB/.test(vds)) return 'PAJERO';
+  return '';
+}
+
+async function autoSearchPrice(brand, model, year, version, autoFill = true) {
+  $('autoPriceStatus').style.display = 'block';
+  $('priceLookupTrigger').style.display = 'none';
+  $('autoPriceIcon').textContent = '⏳';
+
+  // Lấy model từ số khung nếu có để chính xác hơn
+  const chassis = $('f_chassis').value.trim();
+  const chassisModel = modelFromChassis(chassis, brand);
+  const modelBase = chassisModel || (version || model || '').split(/\s/)[0];
+  const seats = parseInt($('f_seats').value) || 0;
+  const minP  = seats > 9 ? 200e6 : 100e6; // xe khách thường đắt hơn
+
+  // Thử lần lượt: query đủ (kèm năm) → query rộng (bỏ năm, lọc năm theo tiêu đề tin)
+  const queries = [
+    `${brand} ${modelBase} ${year}`.replace(/\s+/g, ' ').trim(),
+    `${brand} ${modelBase}`.replace(/\s+/g, ' ').trim(),
+  ].filter((q, i, arr) => q && arr.indexOf(q) === i);
+
+  let result = null;
+
+  for (const q of queries) {
+    $('autoPriceLabel').textContent = `Đang tìm giá "${q}" trên Chợ Tốt...`;
+    const apiUrl = `https://gateway.chotot.com/v1/public/ad-listing?cg=2010&q=${encodeURIComponent(q)}&limit=50&price_min=${minP}&price_max=8000000000`;
+    const data = await fetchJSONWithProxy(apiUrl, s => {
+      $('autoPriceLabel').textContent = `Đang tìm giá "${q}" — ${s}`;
+    });
+    if (!data || !Array.isArray(data.ads)) continue;
+
+    // Lọc theo năm sản xuất ±2 (đọc từ field year hoặc tiêu đề tin rao)
+    const yearNum = parseInt(year);
+    const ads = data.ads.filter(a => {
+      const ay = adYear(a);
+      if (ay && yearNum) return Math.abs(ay - yearNum) <= 2;
+      return true;
+    });
+    const prices = ads.map(a => Number(a.price)).filter(p => p >= minP && p <= 8e9);
+
+    if (prices.length >= 3) {
+      const r = calcIQRMedian(prices);
+      result = { price: r.median, count: prices.length, source: 'Chợ Tốt', min: r.min, max: r.max, query: q };
+      break;
+    }
+  }
+
+  showPriceResult(result, autoFill);
+}
+
+function showPriceResult(result, autoFill) {
+  if (result) {
+    window._autoPrice = result;
+    const priceStr = Math.round(result.price).toLocaleString('vi-VN');
+    const rangeStr = `${Math.round(result.min/1e6)}–${Math.round(result.max/1e6)} triệu ₫`;
+    $('autoPriceIcon').textContent = '✅';
+
+    // LUÔN tự điền vào ô "Số tiền bảo hiểm" (khung Thông tin bảo hiểm)
+    $('f_value').value = Math.round(result.price);
+    updateValueFmt();
+    $('autoPriceLabel').innerHTML = `Đã điền vào Số tiền BH: <strong style="color:var(--primary)">${priceStr} ₫</strong> · ${result.count} xe · ${result.source} · Dao động: ${rangeStr} · <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);text-decoration:underline">Tra thủ công</a>`;
+    $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
+    toast(`Đã điền giá thị trường ${priceStr} ₫ vào Số tiền bảo hiểm (${result.count} tin rao)`);
+
+    updateInfoTab();
+  } else {
+    $('autoPriceIcon').textContent = '🔍';
+    $('autoPriceLabel').innerHTML = 'Không tìm được giá tự động — <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);text-decoration:underline">tra cứu thủ công →</a>';
+    toast('Không tìm được giá tự động — hãy tra cứu thủ công', 'warn');
+    checkPriceLookup();
+  }
+}
+
+function applyAutoPrice(price) {
+  $('f_value').value = Math.round(price);
+  updateValueFmt();
+  $('autoPriceIcon').textContent = '✅';
+  $('autoPriceLabel').innerHTML = `Đã áp dụng giá thị trường: <strong style="color:var(--primary)">${Math.round(price).toLocaleString('vi-VN')} ₫</strong>`;
+  $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function updateInfoTab() {
+  const el = $('infoTabContent');
+  if (!el) return; // phần tử không tồn tại trong layout hiện tại — tránh TypeError
+  const fields = {
+    'Biển số': $('f_plate').value,
+    'Chủ xe': $('f_owner').value,
+    'Địa chỉ': $('f_addr').value,
+    'Nhãn hiệu': $('f_brand').value,
+    'Model code': $('f_model').value,
+    'Phiên bản': $('f_version').value,
+    'Số khung': $('f_chassis').value,
+    'Số máy': $('f_engine').value,
+    'Năm sản xuất': $('f_year').value,
+    'Số chỗ ngồi': $('f_seats').value,
+  };
+
+  const priceInfo = window._autoPrice
+    ? `${Math.round(window._autoPrice.price).toLocaleString('vi-VN')} ₫ (${window._autoPrice.count} xe, nguồn: ${window._autoPrice.source})`
+    : '';
+
+  const html = `
+    <div class="sec-label">📄 Thông tin từ giấy tờ xe (OCR)</div>
+    <div class="vinfo-grid" style="margin-bottom:12px">
+      ${Object.entries(fields).filter(([,v])=>v).map(([l,v])=>`
+        <div class="vinfo-item">
+          <div class="vinfo-lab">${l}</div>
+          <div class="vinfo-val" style="${l==='Biển số'?'color:var(--primary);font-size:15px':l==='Số khung'||l==='Số máy'?'font-family:var(--mono)':''}">${v}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${priceInfo ? `<div class="sec-label">💰 Giá thị trường (tự động)</div>
+    <div class="vinfo-item full" style="margin-bottom:8px">
+      <div class="vinfo-lab">Giá tham khảo</div>
+      <div class="vinfo-val" style="color:var(--accent)">${priceInfo}</div>
+    </div>` : ''}
+  `;
+  el.innerHTML = html;
+}
+
+// ============================================================
+// PRICE LOOKUP (manual)
+// ============================================================
+function checkPriceLookup() {
+  const brand = $('f_brand').value.trim();
+  const model = $('f_model').value.trim();
+  const year  = $('f_year').value.trim();
+  const show = brand && model && year;
+  $('priceLookupTrigger').style.display = show ? 'block' : 'none';
+  if (show) $('priceLookupLabel').textContent = `🔍 Tra cứu giá ${brand} ${model} ${year}`;
+}
+
+function onModelInput() {
+  const brand   = $('f_brand').value.trim();
+  const model   = $('f_model').value.trim();
+  const chassis = $('f_chassis').value.trim();
+  if (brand && model) {
+    const ver = detectVersion(brand, model, chassis);
+    if (ver) {
+      $('f_version').value = ver;
+      $('versionBadge').style.display = 'inline';
+    }
+  }
+  checkPriceLookup();
+}
+
+function openPriceModal() {
+  const brand = $('f_brand').value.trim();
+  const model = $('f_model').value.trim();
+  const year  = $('f_year').value.trim();
+  const slug  = (brand + ' ' + model).toLowerCase().replace(/\s+/g, '-');
+  const q     = encodeURIComponent(`${brand} ${model} ${year}`);
+
+  $('modalCarName').textContent = `Tra cứu giá ${brand} ${model} ${year}`;
+
+  const sources = [
+    { icon:'🚗', name:'XeOto123.com', url:`https://www.xeoto123.com/tim-kiem?q=${q}`, desc:'Mua bán xe ô tô cũ mới' },
+    { icon:'🚙', name:'BonBanh.com', url:`https://bonbanh.com/xe/${slug}`, desc:'Giá xe thị trường Việt Nam' },
+    { icon:'🏷️', name:'Carmudi.vn', url:`https://www.carmudi.vn/mua-ban-xe/${brand.toLowerCase()}/${model.toLowerCase().replace(/\s/g,'-')}`, desc:'Sàn giao dịch xe ô tô' },
+    { icon:'📌', name:'Oto.com.vn', url:`https://oto.com.vn/mua-ban/${slug}`, desc:'Xe ô tô cũ các loại' },
+    { icon:'🔎', name:'Tìm kiếm Google', url:`https://www.google.com/search?q=gia+xe+${q}+thi+truong+2025`, desc:'Tìm giá xe trên Google' },
+  ];
+
+  $('lookupSources').innerHTML = sources.map(s => `
+    <a class="lookup-source" href="${s.url}" target="_blank" rel="noopener">
+      <span class="ls-icon">${s.icon}</span>
+      <div>
+        <div class="ls-name">${s.name}</div>
+        <div class="ls-url">${s.desc}</div>
+      </div>
+      <span class="ls-arrow">↗</span>
+    </a>
+  `).join('');
+
+  $('priceModal').classList.add('show');
+}
+
+$('marketPriceInput').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  $('marketPriceDisplay').textContent = v > 0 ? '→ ' + fmt(v) : '';
+});
+
+function useMarketPrice() {
+  const v = parseFloat($('marketPriceInput').value);
+  if (!v || v < 1000000) { toast('Vui lòng nhập giá trị hợp lệ (≥ 1 triệu ₫)', 'warn'); return; }
+  $('f_value').value = v;
+  updateValueFmt();
+  closePriceModal();
+  $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function closePriceModal() { $('priceModal').classList.remove('show'); }
+$('priceModal').addEventListener('click', function(e) { if (e.target === this) closePriceModal(); });
+
+// ============================================================
+// FORM HELPERS
+// ============================================================
+function updateValueFmt() {
+  const v = parseFloat($('f_value').value) || 0;
+  $('f_value_fmt').value = v > 0 ? Math.round(v).toLocaleString('vi-VN') + ' ₫' : '';
+}
+
+let renewOn = false;
+function toggleRenewal() {
+  renewOn = !renewOn;
+  $('renewToggle').classList.toggle('on', renewOn);
+  $('renewFields').style.display = renewOn ? 'block' : 'none';
+}
+
+function checkGap() {
+  const g = parseInt($('f_gap').value) || 0;
+  $('gapAlert').style.display = g > 12 ? 'flex' : 'none';
+}
+
+function fillDemo() {
+  $('f_plate').value = '14A-894.22';
+  $('f_owner').value = 'ĐỖ THU THỦY';
+  $('f_addr').value  = 'Tổ 5, Khu 3, Thanh Sơn, Uông Bí, Quảng Ninh';
+  $('f_brand').value = 'MITSUBISHI';
+  $('f_model').value = 'XFORCE P1GR1WTGLVVT';
+  $('f_chassis').value = 'MK2XTGR1WSN005052';
+  $('f_engine').value  = '4A91KCD6387';
+  $('f_year').value  = '2024';
+  $('f_seats').value = '5';
+  $('f_type').value  = '1';
+  $('f_value').value = '850000000';
+  updateValueFmt();
+  $('f_ctype').value  = 'personal';
+  $('f_count').value  = '1';
+  $('f_dur').value   = '12';
+  $('f_deduct').value = '0';
+  checkPriceLookup();
+}
+
+function resetForm() {
+  document.querySelectorAll('input:not([type=checkbox]):not([type=file]), select').forEach(el => {
+    if (el.id === 'f_count') el.value = '1';
+    else if (el.id === 'f_dur') el.value = '12';
+    else if (el.id === 'f_floor') el.value = '0.70';
+    else el.value = '';
+  });
+  // Clear BS
+  bsSelected.clear();
+  document.querySelectorAll('.bs-card').forEach(el => el.classList.remove('selected'));
+  $('bsCountBadge').textContent = '0 đã chọn';
+  if (renewOn) toggleRenewal();
+  $('resultContent').style.display = 'none';
+  $('resultEmpty').style.display = 'block';
+  $('priceLookupTrigger').style.display = 'none';
+  $('autoPriceStatus').style.display = 'none';
+  $('versionBadge').style.display = 'none';
+  window._autoPrice = null;
+  resetOCRZone();
+  clearErrors();
+}
+
+// ============================================================
+// VALIDATION
+// ============================================================
+function clearErrors() {
+  document.querySelectorAll('.err').forEach(el => el.textContent = '');
+  document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
+}
+
+function validate() {
+  clearErrors();
+  let ok = true;
+  const type  = $('f_type').value;
+  const value = parseFloat($('f_value').value);
+  const year  = parseInt($('f_year').value);
+
+  if (!type) {
+    $('err_type').textContent = 'Vui lòng chọn loại xe';
+    $('f_type').classList.add('has-error');
+    ok = false;
+  }
+  if (!value || value < 1000000) {
+    $('err_value').textContent = 'Giá trị xe phải ≥ 1 triệu đồng';
+    $('f_value').classList.add('has-error');
+    ok = false;
+  }
+  if (year && (year < 1990 || year > new Date().getFullYear() + 1)) {
+    $('err_year').textContent = 'Năm sản xuất không hợp lệ';
+    ok = false;
+  }
+  return ok;
+}
+
+// ============================================================
+// CHART
+// ============================================================
+let chartInst = null;
+
+function renderChart(base, adjusted, floor, final) {
+  if (chartInst) chartInst.destroy();
+  const ctx = $('feeChart').getContext('2d');
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const textColor = isDark ? '#607090' : '#8090b0';
+  const gridColor = isDark ? 'rgba(99,155,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+  chartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Phí gốc', 'Sau điều chỉnh', 'Phí sàn', 'Phí cuối'],
+      datasets: [{
+        data: [base, adjusted, floor, final],
+        backgroundColor: ['rgba(77,159,255,0.5)','rgba(155,100,255,0.5)','rgba(255,179,71,0.5)','rgba(0,229,180,0.7)'],
+        borderColor: ['#4d9fff','#9b64ff','#ffb347','#00e5b4'],
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + Math.round(ctx.raw).toLocaleString('vi-VN') + ' ₫' } }
+      },
+      scales: {
+        y: { ticks: { color: textColor, callback: v => (v/1000000).toFixed(0) + 'M' }, grid: { color: gridColor } },
+        x: { ticks: { color: textColor }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// MAIN CALCULATE
+// ============================================================
+function calculate() {
+  if (!validate()) return;
+  $('loadingScreen').classList.add('show');
+  setTimeout(_calc, 350);
+}
+
+function _calc() {
+  try {
+    const typeId    = parseInt($('f_type').value);
+    const value     = parseFloat($('f_value').value);
+    const brand     = ($('f_brand').value || '').toLowerCase();
+    const yearVal   = parseInt($('f_year').value) || (new Date().getFullYear() - 1);
+    const ctype     = $('f_ctype').value;
+    const count     = parseInt($('f_count').value) || 1;
+    const dur       = parseInt($('f_dur').value) || 12;
+    const deduct    = parseInt($('f_deduct').value) || 0;
+    const floorCoef = parseFloat($('f_floor').value) || 0.70;
+    const tlbt      = parseFloat($('f_tlbt').value) || 0;
+    const gap       = parseInt($('f_gap').value) || 0;
+
+    const age      = getAge(yearVal);
+    const ageKey   = getAgeKey(age);
+    const ageLabel = getAgeLabel(age);
+    const valM     = value / 1_000_000;
+    const vi       = getValIdx(valM);
+    const typeData = RATES[typeId];
+    const baseRate = typeData.r[ageKey][vi];
+
+    // BS rates using Set
+    let bsRate = 0;
+    const selectedBS = [];
+    BS.forEach(b => {
+      if (bsSelected.has(b.c)) { bsRate += b.r; selectedBS.push(b); }
+    });
+
+    const totalRate = baseRate + bsRate;
+    const baseFee   = (totalRate / 100) * value;
+
+    // Adjustments
+    let factor = 1.0;
+    const adjs = [];
+
+    if (brand.includes('mercedes')) { factor *= 1.10; adjs.push({ l:'Thương hiệu Mercedes', p:+10, t:'pos' }); }
+    if (typeId === 8 && brand.includes('hino')) { factor *= 1.05; adjs.push({ l:'Xe tải HINO', p:+5, t:'pos' }); }
+    if (ctype === 'business') { factor *= 0.90; adjs.push({ l:'Khách hàng Doanh nghiệp', p:-10, t:'neg' }); }
+    else if (ctype === 'hcsn') { factor *= 0.90; adjs.push({ l:'Khách hàng HCSN', p:-10, t:'neg' }); }
+    if (count >= 10 && count <= 30) { factor *= 0.90; adjs.push({ l:`Đoàn ${count} xe (10–30)`, p:-10, t:'neg' }); }
+    else if (count > 30 && count <= 50) { factor *= 0.85; adjs.push({ l:`Đoàn ${count} xe (31–50)`, p:-15, t:'neg' }); }
+    else if (count > 50) { factor *= 0.80; adjs.push({ l:`Đoàn ${count} xe (>50)`, p:-20, t:'neg' }); }
+    // Khấu trừ — tách hệ số riêng để so sánh được các phương án
+    const DEDUCT_OPTS = [
+      { v:0, label:'500.000₫ (sàn)', f:1 },
+      { v:1, label:'1.000.000₫',     f:0.95 },
+      { v:2, label:'2.000.000₫',     f:0.90 },
+      { v:5, label:'5.000.000₫',     f:0.675 },
+    ];
+    const deductOpt = DEDUCT_OPTS.find(o => o.v === deduct) || DEDUCT_OPTS[0];
+    const factorExclDeduct = factor;
+    if (deduct === 1) { adjs.push({ l:'Khấu trừ 1 triệu/vụ', p:-5, t:'neg' }); }
+    else if (deduct === 2) { adjs.push({ l:'Khấu trừ 2 triệu/vụ', p:-10, t:'neg' }); }
+    else if (deduct === 5) { adjs.push({ l:'Khấu trừ 5 triệu/vụ', p:-32.5, t:'neg' }); }
+    factor *= deductOpt.f;
+
+    let adjFee = baseFee * factor;
+
+    // Renewal
+    let renewFactor = 1.0;
+    const isLapsed = renewOn && gap > 12;
+    if (renewOn && !isLapsed) {
+      renewFactor = getRenewalFactor(tlbt);
+      const rp = Math.round((renewFactor - 1) * 100);
+      adjs.push({ l:`Tái tục TLBT=${tlbt}%`, p: rp, t: rp >= 0 ? 'pos' : 'neg' });
+      adjFee *= renewFactor;
+    } else if (isLapsed) {
+      adjs.push({ l:'⚠️ Ngắt quãng >12 tháng → tính như xe lần đầu', p:0, t:'neutral' });
+    }
+
+    // Duration
+    let durFee = adjFee;
+    if (dur < 12) {
+      const f = shortTermFactor(dur);
+      durFee = adjFee * f;
+      adjs.push({ l:`Ngắn hạn ${dur} tháng (×${(f*100).toFixed(0)}%)`, p: Math.round((f-1)*100), t:'neg' });
+    } else if (dur > 12) {
+      const f = dur <= 36 ? 0.90 : 0.85;
+      durFee = adjFee * (dur/12) * f;
+      adjs.push({ l:`Dài hạn ${(dur/12).toFixed(1)} năm (giảm ${Math.round((1-f)*100)}%)`, p: Math.round((f-1)*100), t:'neg' });
+    }
+
+    const floorFee = baseFee * floorCoef;
+    const finalFee = Math.round(Math.max(durFee, floorFee) / 1000) * 1000; // làm tròn nghìn đồng
+    const hitFloor = durFee < floorFee;
+    const totalAdjPct = Math.round((factor * renewFactor - 1) * 100);
+
+    // VAT 10%
+    const vat = Math.round(finalFee * 0.10);
+    const feeWithVat = finalFee + vat;
+
+    // So sánh các mức khấu trừ — giữ nguyên mọi thông số khác
+    const feeForDeduct = df => {
+      let fee = baseFee * factorExclDeduct * df;
+      if (renewOn && !isLapsed) fee *= renewFactor;
+      if (dur < 12) fee *= shortTermFactor(dur);
+      else if (dur > 12) fee *= (dur / 12) * (dur <= 36 ? 0.90 : 0.85);
+      return Math.round(Math.max(fee, floorFee) / 1000) * 1000;
+    };
+
+    // Cảnh báo nghiệp vụ thông minh
+    const warns = [];
+    if (age > 15) warns.push(`Xe ${age} năm tuổi — vượt khung biểu phí chuẩn (tối đa nhóm 10–15 năm). Đang áp tỷ lệ nhóm 10–15 năm, cần thẩm định trước khi cấp đơn.`);
+    const KDVT_TYPES = [5, 7, 11, 12, 13];
+    const isKDVT = $('f_transport').checked;
+    if (isKDVT && [1, 4].includes(typeId)) warns.push('Giấy tờ xe ghi CÓ kinh doanh vận tải nhưng loại xe đang chọn là nhóm KHÔNG KDVT — kiểm tra lại loại xe (nhóm 5/7/11/12/13).');
+    if (!isKDVT && KDVT_TYPES.includes(typeId)) warns.push('Loại xe đang chọn thuộc nhóm kinh doanh vận tải nhưng giấy tờ chưa đánh dấu KDVT — xác nhận lại mục đích sử dụng.');
+    if (value >= 5e9) warns.push('Số tiền bảo hiểm ≥ 5 tỷ — hồ sơ thuộc diện phê duyệt đặc biệt, cần xin ý kiến Ban Tổng Giám đốc theo phân cấp.');
+
+    // ===== RENDER =====
+    $('r_final').textContent = fmt(finalFee);
+    $('r_note').innerHTML  = (hitFloor ? `⚠️ Áp dụng phí sàn (phí tính = ${fmt(durFee)})` : `${dur} tháng · ${typeData.n}`)
+      + ` &nbsp;·&nbsp; <strong style="color:var(--accent)">Gồm VAT 10%: ${fmt(feeWithVat)}</strong>`;
+    $('r_rate').textContent  = totalRate.toFixed(2) + '%';
+    $('r_adj').textContent   = (totalAdjPct >= 0 ? '+' : '') + totalAdjPct + '%';
+    $('r_floor').textContent = fmtM(floorFee) + '₫';
+
+    // BREAKDOWN
+    let html = '';
+    warns.forEach(w => {
+      html += `<div class="alert alert-warn" style="margin-bottom:7px;font-size:10.5px">⚠️ ${w}</div>`;
+    });
+    html += bdRow(`Tỷ lệ phí cơ bản (xe ${ageLabel}, ${V_LABELS[vi]})`, baseRate.toFixed(2) + '%', 'neutral');
+    if (bsRate > 0) html += bdRow(`Điều khoản BS (${selectedBS.map(b=>b.c).join(',')})`, '+' + bsRate.toFixed(2) + '%', 'pos');
+    html += bdRow('Tỷ lệ phí tổng cộng', totalRate.toFixed(2) + '%', 'neutral');
+    html += '<div class="divider"></div>';
+    html += bdRowH('Phí bảo hiểm gốc (lần đầu)', fmt(baseFee));
+
+    if (adjs.filter(a => Math.abs(a.p) > 0).length > 0) {
+      html += '<div class="divider"></div>';
+      adjs.filter(a => Math.abs(a.p) > 0).forEach(a => {
+        const sign = a.t === 'neg' ? '−' : a.t === 'pos' ? '+' : '';
+        html += bdRow(a.l, sign + Math.abs(a.p).toFixed(1) + '%', a.t);
+      });
+      html += bdRowH(`Phí sau điều chỉnh (${dur} tháng)`, fmt(durFee));
+    }
+
+    html += '<div class="divider"></div>';
+    html += bdRow(`Phí sàn tối thiểu (hệ số ${floorCoef})`, fmt(floorFee), hitFloor ? 'pos' : 'neutral', hitFloor ? 'floor-hit' : '');
+    if (hitFloor) {
+      html += `<div class="alert alert-warn" style="margin:7px 0;font-size:10px">⚠️ Phí tính được thấp hơn phí sàn. Áp dụng phí sàn tối thiểu.</div>`;
+    }
+    html += `<div class="bd-item final-row">
+      <span class="bd-label" style="font-weight:700;font-size:12px;color:var(--text)">💰 PHÍ BẢO HIỂM (chưa VAT)</span>
+      <span class="bd-val big">${fmt(finalFee)}</span>
+    </div>`;
+    html += bdRow('Thuế GTGT (VAT 10%)', '+' + fmt(vat), 'pos');
+    html += `<div class="bd-item final-row" style="background:linear-gradient(135deg,rgba(0,229,180,0.14),rgba(77,159,255,0.08));border-color:rgba(0,229,180,0.35)">
+      <span class="bd-label" style="font-weight:700;font-size:12px;color:var(--text)">🧾 TỔNG THANH TOÁN (gồm VAT)</span>
+      <span class="bd-val big" style="color:var(--accent)">${fmt(feeWithVat)}</span>
+    </div>`;
+
+    $('r_breakdown').innerHTML = html;
+
+    // SO SÁNH MỨC KHẤU TRỪ
+    const cmpEl = $('r_deduct_compare');
+    if (cmpEl) {
+      cmpEl.innerHTML = DEDUCT_OPTS.map(o => {
+        const fee = feeForDeduct(o.f);
+        const cur = o.v === deduct;
+        const diff = fee - finalFee;
+        const diffStr = cur ? 'đang chọn'
+          : (diff === 0 ? '±0' : (diff > 0 ? '+' : '−') + Math.abs(Math.round(diff / 1000)).toLocaleString('vi-VN') + 'K');
+        return `<div class="bd-item ${cur ? 'highlight' : ''}">
+          <span class="bd-label">${cur ? '▶ ' : ''}Khấu trừ ${o.label}</span>
+          <span style="display:flex;gap:10px;align-items:baseline">
+            <span style="font-size:9px;color:${cur ? 'var(--primary)' : 'var(--text-dim)'}">${diffStr}</span>
+            <span class="bd-val ${cur ? 'big' : 'neutral'}">${fmt(fee)}</span>
+          </span>
+        </div>`;
+      }).join('') + `<div style="font-size:9px;color:var(--text-muted);margin-top:6px">So sánh phí (chưa VAT) khi đổi mức khấu trừ, mọi thông số khác giữ nguyên · đã áp phí sàn ${fmt(floorFee)}</div>`;
+    }
+
+    // SUMMARY
+    $('r_summary').innerHTML = [
+      ['Biển số xe', $('f_plate').value || '--'],
+      ['Chủ xe', $('f_owner').value || '--'],
+      ['Hãng / Model', `${$('f_brand').value || ''} ${$('f_model').value || ''}`.trim() || '--'],
+      ['Năm sản xuất', yearVal],
+      ['Loại xe', typeData.n],
+      ['Số tiền BH', fmt(value)],
+      ['Thời hạn', dur + ' tháng'],
+      ['Tỷ lệ phí', totalRate.toFixed(2) + '%'],
+      ['Phí sàn', fmt(floorFee)],
+      ['Phí bảo hiểm', fmt(finalFee)],
+      ['Tổng gồm VAT 10%', fmt(feeWithVat)],
+    ].map(([l,v]) => `
+      <div class="vinfo-item">
+        <div class="vinfo-lab">${l}</div>
+        <div class="vinfo-val">${v}</div>
+      </div>
+    `).join('');
+
+    window._last = {
+      plate:$('f_plate').value||'--', owner:$('f_owner').value||'--',
+      brand:$('f_brand').value||'--', model:$('f_model').value||'--',
+      year:yearVal, type:typeData.n, value, dur, rate:totalRate,
+      baseFee, durFee, floorFee, finalFee, vat, feeWithVat,
+      date:new Date().toLocaleString('vi-VN')
+    };
+
+    renderChart(baseFee, durFee, floorFee, finalFee);
+
+    $('resultEmpty').style.display = 'none';
+    $('resultContent').style.display = 'block';
+
+    if (window.innerWidth <= 1024) {
+      $('resultContent').scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+  } finally {
+    $('loadingScreen').classList.remove('show');
+  }
+}
+
+function bdRow(label, val, type, extra='') {
+  return `<div class="bd-item ${extra}"><span class="bd-label">${label}</span><span class="bd-val ${type}">${val}</span></div>`;
+}
+function bdRowH(label, val) {
+  return `<div class="bd-item highlight"><span class="bd-label">${label}</span><span class="bd-val neutral">${val}</span></div>`;
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function saveHistory() {
+  if (!window._last) return;
+  const h = JSON.parse(localStorage.getItem('pti_h') || '[]');
+  h.unshift(window._last);
+  if (h.length > 100) h.pop();
+  localStorage.setItem('pti_h', JSON.stringify(h));
+  renderHistory();
+  toast('Đã lưu vào lịch sử tính phí');
+}
+
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('pti_h') || '[]');
+  const el = $('histContent');
+  if (!h.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Chưa có lịch sử. Hãy tính phí và nhấn "Lưu lịch sử".</p></div>';
+    return;
+  }
+  el.innerHTML = `<div style="overflow-x:auto">
+    <table class="hist-table">
+      <thead><tr>
+        <th>#</th><th>Ngày tính</th><th>Biển số</th><th>Chủ xe</th>
+        <th>Xe</th><th>Giá trị</th><th>Tỷ lệ</th><th>Phí BH</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${h.map((r,i) => `<tr>
+          <td style="color:var(--text-muted)">${i+1}</td>
+          <td>${r.date}</td>
+          <td><strong>${r.plate}</strong></td>
+          <td>${r.owner}</td>
+          <td>${r.brand} ${r.model} (${r.year})</td>
+          <td style="font-family:var(--mono)">${Math.round(r.value/1000000)}M₫</td>
+          <td style="font-family:var(--mono)">${r.rate.toFixed(2)}%</td>
+          <td style="color:var(--primary);font-weight:700;font-family:var(--mono)">${Math.round(r.finalFee/1000).toLocaleString()}K₫</td>
+          <td><button class="btn btn-danger-soft btn-sm" onclick="delHist(${i})">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function delHist(i) {
+  const h = JSON.parse(localStorage.getItem('pti_h') || '[]');
+  h.splice(i,1);
+  localStorage.setItem('pti_h', JSON.stringify(h));
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('Xóa toàn bộ lịch sử tính phí?')) return;
+  localStorage.removeItem('pti_h');
+  renderHistory();
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab, btn) {
+  ['calc','history','guide'].forEach(t => {
+    $('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'history') renderHistory();
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  $('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('pti_theme', next);
+  if (chartInst && window._last) {
+    const v = window._last;
+    renderChart(v.baseFee||0, v.durFee||0, v.floorFee||0, v.finalFee||0);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+(function init() {
+  renderBS();
+  renderHistory();
+  const t = localStorage.getItem('pti_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  $('themeIcon').textContent = t === 'dark' ? '☀️' : '🌙';
+  updateOcrZoneBadge();
+  // Cập nhật label checkbox kinh doanh vận tải
+  $('f_transport').addEventListener('change', function() {
+    $('f_transport_label').textContent = this.checked ? 'Có kinh doanh vận tải' : 'Không kinh doanh vận tải';
+    $('f_transport_label').style.color = this.checked ? 'var(--warn)' : 'var(--text-muted)';
+  });
+})();
+</script>
+</body>
+</html>

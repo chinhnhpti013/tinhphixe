@@ -1,0 +1,12 @@
+# Hệ điều hành
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# File tạm
+*.tmp
+*.bak
+~$*
+
+# Tai lieu noi bo - khong dua len GitHub
+docs/
