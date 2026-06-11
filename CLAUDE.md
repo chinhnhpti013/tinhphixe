@@ -37,9 +37,12 @@ resolveBand()        — Chọn band theo giá trị xe hoặc lựa chọn ngư
 pickByAge()          — Lấy giá trị theo nhóm tuổi, ô null lùi về nhóm gần nhất + cảnh báo trình TCT
 updateBandUI()       — Hiện/ẩn ô chọn khung phụ #f_bandWrap khi loại xe là 8 (tải) / 10 (rơ móc)
 BS[]                 — 17 điều khoản bổ sung BS01–BS27
-bsEffective()        — Tỷ lệ BS theo THỜI GIAN SỬ DỤNG XE (Phụ lục 01): BS02 0/0.10/0.20/0.30%
-                       theo nhóm tuổi; BS05 0.45/0.50/0.75%, BS26 0.13/0.15/0.22% (xe ≥10 năm
-                       chặn, trình TCT); BS07 chỉ xe mới 100%; mã khác giữ tỷ lệ cố định
+bsEffective()        — Tỷ lệ BS theo TUỔI XE + LOẠI XE (Phụ lục 01): BS02 0/0.10/0.20/0.30%
+                       (mọi loại); BS05/BS26 chia 2 nhóm — nhóm A (xe con/van/pickup/taxi CN/
+                       KDVT/Demo: BS05 0.45/0.50/0.75%, BS26 0.13/0.15/0.22%), nhóm B (xe khách/
+                       tải/chuyên dùng/rơ móc: BS05 0.25/0.35/0.40%, BS26 0.10/0.11/0.13%);
+                       xe ≥10 năm chặn trình TCT; taxi mào không bán BS05, BS26 chặn từ 6 năm;
+                       BS07 chỉ xe mới 100%; BS04 0.02%, BS06 0.05% cố định; mã khác cố định
 bsSelected           — Set<string> lưu mã BS đang được chọn (không dùng checkbox)
 calculate()          — Engine tính phí: làm tròn nghìn ₫, VAT 10%, cảnh báo nghiệp vụ
                        (xe >15 năm, KDVT lệch loại xe, STBH ≥5 tỷ), so sánh 4 mức khấu trừ
@@ -130,17 +133,22 @@ Tỷ lệ BS     = bsEffective(mã BS, tuổi xe) — BS02/BS05/BS26 tăng theo 
 ```
 
 ### A2. Thời gian sử dụng xe (tuổi xe = năm hiện tại − năm sản xuất)
-| Nhóm tuổi | Tỷ lệ cơ bản | BS02 | BS05 | BS26 |
-|-----------|--------------|------|------|------|
-| < 3 năm | RATES a03 | +0% | +0.45% | +0.13% |
-| 3–6 năm | RATES a36 | +0.10% | +0.45% | +0.13% |
-| 6–9 năm | RATES a610 | +0.20% | +0.50% | +0.15% |
-| 9–10 năm | RATES a610 | +0.20% | +0.75% | +0.22% |
-| 10–15 năm | RATES a1015 | +0.30% | Trình TCT | Trình TCT |
-| > 15 năm | a1015 + cảnh báo thẩm định | | | |
+Nhóm A = xe con/van/pickup/taxi CN/xe con KDVT/Demo (type 1,2,11,12,14); nhóm B = còn lại
 
+| Nhóm tuổi | Tỷ lệ cơ bản | BS02 | BS05 (A / B) | BS26 (A / B) |
+|-----------|--------------|------|--------------|--------------|
+| < 3 năm | band.r[0] | +0% | 0.45 / 0.25% | 0.13 / 0.10% |
+| 3–6 năm | band.r[1] | +0.10% | 0.45 / 0.35% | 0.13 / 0.11% |
+| 6–9 năm | band.r[2] | +0.20% | 0.50 / 0.40% | 0.15 / 0.13% |
+| 9–10 năm | band.r[2] | +0.20% | 0.75 / 0.40% | 0.22 / 0.13% |
+| 10–15 năm | band.r[3] | +0.30% | Trình TCT | Trình TCT |
+| > 15 năm | band.r[3] + cảnh báo thẩm định | | | |
+
+- BS04 = 0.02%, BS06 = 0.05% — cố định mọi loại xe/tuổi xe
+- Taxi mào (type 13): không bán BS05; BS26 chỉ bán dưới 6 năm
 - BS07 chỉ áp dụng xe mới 100% (tuổi < 1 năm), xe cũ bị loại + cảnh báo
 - Xe KDVT/taxi (type 5/7/11/12/13 hoặc checkbox KDVT) ≥10 năm: ngoài biểu phí, cảnh báo trình TCT
+- Card BS render lại khi đổi Loại xe hoặc Năm sản xuất (tỷ lệ phụ thuộc cả hai)
 
 ### B. Tăng / Giảm phí
 | Điều kiện | Hệ số |

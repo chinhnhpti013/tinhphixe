@@ -1403,9 +1403,9 @@ function updateBandUI() {
 const BS = [
   {c:'BS01', n:'xe ngoài lãnh thổ vn', r:0.15},
   {c:'BS02', n:'bảo hiểm thay thế mới', r:0.30},
-  {c:'BS04', n:'mất trộm/cướp bộ phận', r:0.20},
-  {c:'BS05', n:'chọn cơ sở sửa chữa', r:0.25},
-  {c:'BS06', n:'động cơ ngập nước (thủy kích)', r:0.10},
+  {c:'BS04', n:'mất trộm/cướp bộ phận', r:0.02},
+  {c:'BS05', n:'chọn cơ sở sửa chữa', r:0.45},
+  {c:'BS06', n:'động cơ ngập nước (thủy kích)', r:0.05},
   {c:'BS07', n:'thay xe mới năm đầu tiên', r:0.15},
   {c:'BS08', n:'khấu trừ bậc thang', r:0.05},
   {c:'BS09', n:'chi phí thuê xe thay thế', r:0.08},
@@ -1420,25 +1420,45 @@ const BS = [
   {c:'BS27', n:'đầu kéo lắp hệ thống thủy lực', r:0.15},
 ];
 
-// Phí BS phụ thuộc THỜI GIAN SỬ DỤNG XE — theo Phụ lục 01 biểu phí VCX 10.2025:
-// BS02 tăng dần theo tuổi; BS05/BS26 tăng giá từ 6 năm, xe 10–15 năm phải trình TCT;
-// BS07 chỉ áp dụng xe mới 100%. Trả về {r} hoặc {blocked: lý do}.
-function bsEffective(code, baseR, age) {
+// Phí BS phụ thuộc THỜI GIAN SỬ DỤNG XE và LOẠI XE — theo Phụ lục 01 biểu phí VCX 10.2025:
+// BS02 tăng dần theo tuổi (mọi loại xe); BS05/BS26 chia 2 nhóm loại xe và tăng theo tuổi,
+// xe 10–15 năm phải trình TCT; taxi mào không bán BS05; BS07 chỉ áp dụng xe mới 100%.
+// Trả về {r} hoặc {blocked: lý do}.
+function bsEffective(code, baseR, age, typeId) {
+  const t = parseInt(typeId) || 0;
+  // Nhóm A: xe con ≤9 chỗ/van/pickup/taxi CN/xe con KDVT/Demo — biểu phí BS cao hơn
+  const grpA = [1, 2, 11, 12, 14].includes(t) || !t; // chưa chọn loại xe → tạm coi nhóm A
   switch (code) {
-    case 'BS02': // bảo hiểm thay thế mới (không khấu hao)
+    case 'BS02': // bảo hiểm thay thế mới (không khấu hao) — chung mọi loại xe
       if (age < 3)  return { r: 0 };
       if (age < 6)  return { r: 0.10 };
       if (age < 10) return { r: 0.20 };
       return { r: 0.30 };
     case 'BS05': // lựa chọn cơ sở sửa chữa
-      if (age < 6)  return { r: 0.45 };
-      if (age < 9)  return { r: 0.50 };
-      if (age < 10) return { r: 0.75 };
+      if (t === 13) return { blocked: 'biểu phí không bán BS05 cho taxi truyền thống có mào' };
+      if (grpA) {
+        if (age < 6)  return { r: 0.45 };
+        if (age < 9)  return { r: 0.50 };
+        if (age < 10) return { r: 0.75 };
+        return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
+      }
+      // Nhóm B: xe điện/xe khách/chuyên dùng/xe tải/đầu kéo/rơ móc
+      if (age < 3)  return { r: 0.25 };
+      if (age < 6)  return { r: 0.35 };
+      if (age < 10) return { r: 0.40 };
       return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
     case 'BS26': // phụ tùng thay thế chính hãng
-      if (age < 6)  return { r: 0.13 };
-      if (age < 9)  return { r: 0.15 };
-      if (age < 10) return { r: 0.22 };
+      if (t === 14) return age < 3 ? { r: 0.10 } : { blocked: 'xe Demo chỉ áp dụng dưới 3 năm' };
+      if (t === 13) return age < 6 ? { r: 0.13 } : { blocked: 'taxi mào từ 6 năm phải trình TCT phê duyệt' };
+      if (grpA) {
+        if (age < 6)  return { r: 0.13 };
+        if (age < 9)  return { r: 0.15 };
+        if (age < 10) return { r: 0.22 };
+        return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
+      }
+      if (age < 3)  return { r: 0.10 };
+      if (age < 6)  return { r: 0.11 };
+      if (age < 10) return { r: 0.13 };
       return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
     case 'BS07': // thay xe mới năm đầu tiên
       if (age < 1)  return { r: baseR };
@@ -1559,7 +1579,7 @@ function renderBS() {
   const yearVal = parseInt($('f_year') && $('f_year').value) || (new Date().getFullYear() - 1);
   const age = getAge(yearVal);
   $('bsList').innerHTML = BS.map(b => {
-    const eff = bsEffective(b.c, b.r, age);
+    const eff = bsEffective(b.c, b.r, age, $('f_type') && $('f_type').value);
     const rateTxt = eff.blocked
       ? `<span title="${eff.blocked}" style="color:var(--warn)">Trình TCT</span>`
       : `+${eff.r.toFixed(2)}%`;
@@ -3036,7 +3056,7 @@ function _calc() {
     const bsBlocked = [];
     BS.forEach(b => {
       if (!bsSelected.has(b.c)) return;
-      const eff = bsEffective(b.c, b.r, age);
+      const eff = bsEffective(b.c, b.r, age, typeId);
       if (eff.blocked) { bsBlocked.push({ ...b, reason: eff.blocked }); return; }
       bsRate += eff.r;
       selectedBS.push({ ...b, r: eff.r });
@@ -3341,7 +3361,7 @@ function toggleTheme() {
 (function init() {
   renderBS();
   renderHistory();
-  $('f_type').addEventListener('change', updateBandUI);
+  $('f_type').addEventListener('change', () => { updateBandUI(); renderBS(); }); // tỷ lệ BS05/BS26 đổi theo loại xe
   const t = localStorage.getItem('pti_theme') || 'light';
   document.documentElement.setAttribute('data-theme', t);
   $('themeIcon').textContent = t === 'dark' ? '☀️' : '🌙';
