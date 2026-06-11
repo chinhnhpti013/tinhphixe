@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PTI Insurance Calculator PRO</title>
+<title>Công cụ tra cứu giá trị xe và tính phí bảo hiểm xe ô tô - PTI</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -580,94 +580,6 @@ select option { background: var(--surface2); }
 }
 
 /* ===== PRICE LOOKUP ===== */
-.price-lookup-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  background: rgba(0,229,180,0.06);
-  border: 1px solid rgba(0,229,180,0.25);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-
-.price-lookup-trigger:hover { background: rgba(0,229,180,0.12); border-color: var(--accent); }
-.price-lookup-trigger span { font-size: 17px; font-weight: 600; color: var(--accent); }
-
-/* ===== MODAL ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
-  z-index: 500;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.modal-overlay.show { display: flex; }
-
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 16px;
-  width: 100%;
-  max-width: 540px;
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-header {
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.modal-body { padding: 16px 20px; }
-.modal-footer { padding: 12px 20px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-
-.lookup-source {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  margin-bottom: 7px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  color: var(--text);
-}
-
-.lookup-source:hover { border-color: var(--primary); background: var(--surface3); }
-.lookup-source .ls-icon { font-size: 24px; }
-.lookup-source .ls-name { font-size: 18px; font-weight: 600; }
-.lookup-source .ls-url { font-size: 15px; color: var(--text-muted); font-family: var(--mono); }
-.lookup-source .ls-arrow { margin-left: auto; color: var(--text-dim); font-size: 17px; }
-
-.market-price-input {
-  margin-top: 14px;
-  padding: 12px;
-  background: rgba(0,229,180,0.05);
-  border: 1px solid rgba(0,229,180,0.2);
-  border-radius: 10px;
-}
-
 /* ===== RESULT PANEL ===== */
 .result-hero {
   background: linear-gradient(135deg, #0a1f3a, #0d2640, #071520);
@@ -962,48 +874,13 @@ select option { background: var(--surface2); }
   <p id="loadingText">Đang tính phí bảo hiểm...</p>
 </div>
 
-<!-- MODAL: TRA CỨU GIÁ XE -->
-<div class="modal-overlay" id="priceModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <div style="font-size: 23px;font-weight:800" id="modalCarName">Tra cứu giá xe</div>
-        <div style="font-size: 17px;color:var(--text-muted);margin-top:2px">Tra cứu giá thị trường trên các trang mua bán xe Việt Nam</div>
-      </div>
-      <button class="btn btn-ghost btn-icon" onclick="closePriceModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="alert alert-info" style="margin-bottom:12px">
-        💡 Mở các trang bên dưới, tìm xe cùng hãng/model/năm để xác định giá thị trường, rồi nhập vào ô bên dưới.
-      </div>
-      <div id="lookupSources"></div>
-      <div class="market-price-input">
-        <label style="text-transform:none;letter-spacing:0;font-size: 18px;color:var(--text);font-weight:700;display:block;margin-bottom:7px">
-          💰 Nhập giá thị trường sau khi tra cứu
-        </label>
-        <div style="display:flex;gap:7px;align-items:flex-end">
-          <div style="flex:1">
-            <label>Giá xe (VNĐ)</label>
-            <input type="number" id="marketPriceInput" placeholder="850000000" style="margin-top:3px">
-          </div>
-          <button class="btn btn-accent" onclick="useMarketPrice()">Dùng giá này →</button>
-        </div>
-        <div style="margin-top:6px;font-size: 15px;color:var(--text-muted)" id="marketPriceDisplay"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closePriceModal()">Đóng</button>
-    </div>
-  </div>
-</div>
-
 <!-- HEADER -->
 <header class="header">
   <div class="logo">
     <div class="logo-mark">🛡️</div>
     <div class="logo-text">
-      <h1>PTI <span>Insurance</span> Calculator PRO</h1>
-      <p>Bảo hiểm vật chất xe ô tô · Phiên bản chuyên nghiệp</p>
+      <h1>Công cụ tra cứu giá trị xe và tính phí bảo hiểm xe ô tô - <span>PTI</span></h1>
+      <p>Nhóm AI - Công ty Bảo hiểm Bưu điện Quảng Ninh</p>
     </div>
   </div>
   <div class="header-right no-print">
@@ -1075,12 +952,12 @@ select option { background: var(--surface2); }
             <input type="text"   id="f_plate"   maxlength="15">
             <input type="text"   id="f_owner">
             <input type="text"   id="f_addr">
-            <input type="text"   id="f_brand"   oninput="checkPriceLookup()">
+            <input type="text"   id="f_brand">
             <input type="text"   id="f_model"   oninput="onModelInput()">
             <input type="text"   id="f_version">
             <input type="text"   id="f_chassis">
             <input type="text"   id="f_engine">
-            <input type="number" id="f_year"    oninput="checkPriceLookup()">
+            <input type="number" id="f_year">
             <input type="number" id="f_seats">
             <input type="text"   id="f_country">
             <input type="checkbox" id="f_transport">
@@ -1113,12 +990,12 @@ select option { background: var(--surface2); }
             </div>
           </div>
 
-          <!-- NÚT TRA GIÁ TRỊ XE -->
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-primary" id="btnTraGia" onclick="traGiaTriXe()" style="flex:1;min-width:200px">
-              💹 Tra giá trị xe thị trường
-            </button>
-            <button class="btn btn-ghost btn-sm" onclick="openPriceModal()" style="flex-shrink:0" id="btnTraThuCong">Tra thủ công →</button>
+          <!-- DỮ LIỆU TRA CỨU — kết quả chi tiết hiển thị tại đây -->
+          <div id="priceDataPanel">
+            <div style="text-align:center;padding:24px 12px;color:var(--text-dim)">
+              <div style="font-size: 36px;margin-bottom:8px;opacity:0.6">💹</div>
+              <div style="font-size: 16px;line-height:1.6">Chưa có dữ liệu tra cứu.<br>OCR giấy tờ xe hoặc nhấn nút phía dưới để tra giá thị trường.</div>
+            </div>
           </div>
 
           <!-- AUTO PRICE STATUS -->
@@ -1129,21 +1006,11 @@ select option { background: var(--surface2); }
             </div>
           </div>
 
-          <!-- DỮ LIỆU TRA CỨU — kết quả chi tiết hiển thị tại đây -->
-          <div id="priceDataPanel" style="margin-top:10px">
-            <div style="text-align:center;padding:24px 12px;color:var(--text-dim)">
-              <div style="font-size: 36px;margin-bottom:8px;opacity:0.6">💹</div>
-              <div style="font-size: 16px;line-height:1.6">Chưa có dữ liệu tra cứu.<br>OCR giấy tờ xe hoặc nhấn nút phía trên để tra giá thị trường.</div>
-            </div>
-          </div>
-
-          <!-- PRICE LOOKUP TRIGGER (manual fallback, hidden — kept for compatibility) -->
-          <div id="priceLookupTrigger" style="display:none">
-            <div class="price-lookup-trigger" onclick="openPriceModal()">
-              <span>🔍</span>
-              <span id="priceLookupLabel">Tra cứu giá xe thị trường</span>
-              <span style="margin-left:auto;font-size: 15px;color:var(--text-muted)">→</span>
-            </div>
+          <!-- NÚT TRA GIÁ TRỊ XE -->
+          <div style="margin-top:10px">
+            <button class="btn btn-primary" id="btnTraGia" onclick="traGiaTriXe()" style="width:100%">
+              💹 Tra giá trị xe thị trường
+            </button>
           </div>
         </div>
 
@@ -2437,7 +2304,6 @@ function syncVitField(id, val) {
   const el = $(id);
   if (!el) return;
   el.value = val;
-  if (id === 'f_brand' || id === 'f_year') checkPriceLookup();
   if (id === 'f_model') onModelInput && onModelInput();
 }
 
@@ -2498,8 +2364,6 @@ function fillFromOCR(extracted) {
   if (brand && (model || chassis) && year) {
     window._autoPrice = null;
     autoSearchPrice(brand, model, year, $('f_version').value.trim());
-  } else {
-    checkPriceLookup();
   }
 }
 
@@ -2708,7 +2572,6 @@ function modelFromChassis(chassis, brand) {
 
 async function autoSearchPrice(brand, model, year, version, autoFill = true) {
   $('autoPriceStatus').style.display = 'block';
-  $('priceLookupTrigger').style.display = 'none';
   $('autoPriceIcon').textContent = '⏳';
 
   // Lấy model từ số khung nếu có để chính xác hơn
@@ -2771,10 +2634,9 @@ function showPriceResult(result, autoFill) {
     updateInfoTab();
   } else {
     $('autoPriceIcon').textContent = '🔍';
-    $('autoPriceLabel').innerHTML = 'Không tìm được giá tự động — <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);text-decoration:underline">tra cứu thủ công →</a>';
+    $('autoPriceLabel').textContent = 'Không tìm được giá tự động — hãy nhập Số tiền bảo hiểm thủ công.';
     renderPriceDataPanel(null);
-    toast('Không tìm được giá tự động — hãy tra cứu thủ công', 'warn');
-    checkPriceLookup();
+    toast('Không tìm được giá tự động — hãy nhập Số tiền bảo hiểm thủ công', 'warn');
   }
 }
 
@@ -2787,7 +2649,7 @@ function renderPriceDataPanel(result) {
       <div style="text-align:center;padding:20px 12px;color:var(--text-muted)">
         <div style="font-size: 32px;margin-bottom:6px">🔍</div>
         <div style="font-size: 16px;line-height:1.6">Không tìm thấy đủ tin rao phù hợp.<br>
-        Hãy <a href="javascript:void(0)" onclick="openPriceModal()" style="color:var(--accent);font-weight:600">tra cứu thủ công →</a></div>
+        Hãy nhập trực tiếp vào ô Số tiền bảo hiểm.</div>
       </div>`;
     return;
   }
@@ -2865,18 +2727,6 @@ function updateInfoTab() {
   el.innerHTML = html;
 }
 
-// ============================================================
-// PRICE LOOKUP (manual)
-// ============================================================
-function checkPriceLookup() {
-  const brand = $('f_brand').value.trim();
-  const model = $('f_model').value.trim();
-  const year  = $('f_year').value.trim();
-  const show = brand && model && year;
-  $('priceLookupTrigger').style.display = show ? 'block' : 'none';
-  if (show) $('priceLookupLabel').textContent = `🔍 Tra cứu giá ${brand} ${model} ${year}`;
-}
-
 function onModelInput() {
   const brand   = $('f_brand').value.trim();
   const model   = $('f_model').value.trim();
@@ -2888,56 +2738,7 @@ function onModelInput() {
       $('versionBadge').style.display = 'inline';
     }
   }
-  checkPriceLookup();
 }
-
-function openPriceModal() {
-  const brand = $('f_brand').value.trim();
-  const model = $('f_model').value.trim();
-  const year  = $('f_year').value.trim();
-  const slug  = (brand + ' ' + model).toLowerCase().replace(/\s+/g, '-');
-  const q     = encodeURIComponent(`${brand} ${model} ${year}`);
-
-  $('modalCarName').textContent = `Tra cứu giá ${brand} ${model} ${year}`;
-
-  const sources = [
-    { icon:'🚗', name:'XeOto123.com', url:`https://www.xeoto123.com/tim-kiem?q=${q}`, desc:'Mua bán xe ô tô cũ mới' },
-    { icon:'🚙', name:'BonBanh.com', url:`https://bonbanh.com/xe/${slug}`, desc:'Giá xe thị trường Việt Nam' },
-    { icon:'🏷️', name:'Carmudi.vn', url:`https://www.carmudi.vn/mua-ban-xe/${brand.toLowerCase()}/${model.toLowerCase().replace(/\s/g,'-')}`, desc:'Sàn giao dịch xe ô tô' },
-    { icon:'📌', name:'Oto.com.vn', url:`https://oto.com.vn/mua-ban/${slug}`, desc:'Xe ô tô cũ các loại' },
-    { icon:'🔎', name:'Tìm kiếm Google', url:`https://www.google.com/search?q=gia+xe+${q}+thi+truong+2025`, desc:'Tìm giá xe trên Google' },
-  ];
-
-  $('lookupSources').innerHTML = sources.map(s => `
-    <a class="lookup-source" href="${s.url}" target="_blank" rel="noopener">
-      <span class="ls-icon">${s.icon}</span>
-      <div>
-        <div class="ls-name">${s.name}</div>
-        <div class="ls-url">${s.desc}</div>
-      </div>
-      <span class="ls-arrow">↗</span>
-    </a>
-  `).join('');
-
-  $('priceModal').classList.add('show');
-}
-
-$('marketPriceInput').addEventListener('input', function() {
-  const v = parseFloat(this.value);
-  $('marketPriceDisplay').textContent = v > 0 ? '→ ' + fmt(v) : '';
-});
-
-function useMarketPrice() {
-  const v = parseFloat($('marketPriceInput').value);
-  if (!v || v < 1000000) { toast('Vui lòng nhập giá trị hợp lệ (≥ 1 triệu ₫)', 'warn'); return; }
-  $('f_value').value = v;
-  updateValueFmt();
-  closePriceModal();
-  $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
-}
-
-function closePriceModal() { $('priceModal').classList.remove('show'); }
-$('priceModal').addEventListener('click', function(e) { if (e.target === this) closePriceModal(); });
 
 // ============================================================
 // FORM HELPERS
@@ -2976,7 +2777,6 @@ function fillDemo() {
   $('f_count').value  = '1';
   $('f_dur').value   = '12';
   $('f_deduct').value = '0';
-  checkPriceLookup();
 }
 
 function resetForm() {
@@ -2993,7 +2793,6 @@ function resetForm() {
   if (renewOn) toggleRenewal();
   $('resultContent').style.display = 'none';
   $('resultEmpty').style.display = 'block';
-  $('priceLookupTrigger').style.display = 'none';
   $('autoPriceStatus').style.display = 'none';
   $('versionBadge').style.display = 'none';
   window._autoPrice = null;

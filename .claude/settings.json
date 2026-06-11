@@ -2,7 +2,7 @@
   "project": {
     "name": "PTI Insurance Calculator PRO",
     "description": "Mini web app tính phí bảo hiểm vật chất xe ô tô theo quy tắc biểu phí PTI",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "author": "PTI Quảng Ninh",
     "language": "vi"
   },
@@ -48,7 +48,8 @@
       "queries": ["{brand} {model} {year}", "{brand} {model} (mở rộng nếu lượt 1 dưới 3 tin)"]
     },
     "autoFill": "Giá tìm được LUÔN tự điền vào ô Số tiền bảo hiểm (#f_value) + toast + scrollIntoView",
-    "removed": "bonbanh/oto.com.vn/xegiatot scraping đã bỏ từ v1.3.0 — trang không chứa giá tĩnh, proxy allorigins từng chết 522"
+    "cardLayout": "Card 'Tra cứu giá trị xe': #priceDataPanel (dữ liệu) trên → #autoPriceStatus (trạng thái) → nút #btnTraGia full-width dưới cùng",
+    "removed": "bonbanh/oto.com.vn/xegiatot scraping đã bỏ từ v1.3.0 — trang không chứa giá tĩnh, proxy allorigins từng chết 522. Tra cứu thủ công (modal priceModal, openPriceModal, checkPriceLookup, priceLookupTrigger) đã xóa từ v1.4.0 — chỉ còn tra tự động, không tìm được giá thì nhập tay vào #f_value"
   },
 
   "rateTable": {
@@ -116,14 +117,6 @@
     "minImageDim": 2000,
     "optionalEngine": "Claude Vision (claude-haiku) khi người dùng cài API key trong localStorage['pti_anthropic_key']"
   },
-
-  "priceLookupSources": [
-    { "name": "XeOto123", "url": "https://www.xeoto123.com/tim-kiem?q={query}" },
-    { "name": "BonBanh", "url": "https://bonbanh.com/xe/{slug}" },
-    { "name": "Carmudi", "url": "https://www.carmudi.vn/mua-ban-xe/{brand}/{model}" },
-    { "name": "Oto.com.vn", "url": "https://oto.com.vn/mua-ban/{slug}" },
-    { "name": "Google", "url": "https://www.google.com/search?q=gia+xe+{query}+thi+truong" }
-  ],
 
   "ui": {
     "defaultTheme": "dark",

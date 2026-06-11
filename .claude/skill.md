@@ -73,24 +73,14 @@ BS = [
 
 ---
 
-## Skill 4: Thêm nguồn tra cứu giá xe (thủ công)
-
-**Vị trí:** Hàm `openPriceModal()` — mảng `sources[]`.
-
-```js
-{ icon:'🚗', name:'Tên trang', url:`https://...${q}...`, desc:'Mô tả' }
-```
-
----
-
-## Skill 5: Thêm loại xe mới
+## Skill 4: Thêm loại xe mới
 
 1. Thêm `<option value="15">` vào `<select id="f_type">`
 2. Thêm entry `15: { n:'...', r:{ a03:[...], a36:[...], a610:[...], a1015:[...] }}` vào `RATES`
 
 ---
 
-## Skill 6: Thêm pattern phiên bản xe mới
+## Skill 5: Thêm pattern phiên bản xe mới
 
 **Vị trí:** Mảng `patterns[]` trong hàm `detectVersion()`.
 
@@ -104,7 +94,7 @@ BS = [
 
 ---
 
-## Skill 7: Điều chỉnh logic tìm giá tự động
+## Skill 6: Điều chỉnh logic tìm giá tự động
 
 **Vị trí:** Hàm `autoSearchPrice(brand, model, year, version)` + `fetchJSONWithProxy(url, onStatus)`.
 
@@ -118,10 +108,14 @@ BS = [
 - Công thức: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu (`calcIQRMedian`)
 - **Giá tìm được LUÔN tự điền vào ô Số tiền bảo hiểm (`f_value`)** trong `showPriceResult()` + toast
 - Khi thêm proxy mới: chèn vào giữa chuỗi trong `fetchJSONWithProxy`, giữ timeout hợp lý (15–20s)
+- **Bố cục card "Tra cứu giá trị xe"** (từ v1.4.0): `#priceDataPanel` (dữ liệu) trên →
+  `#autoPriceStatus` (trạng thái) → nút `#btnTraGia` full-width dưới cùng
+- **Tra cứu thủ công đã xóa** (modal `priceModal`, `openPriceModal`, `checkPriceLookup`,
+  `priceLookupTrigger`) — không tìm được giá thì người dùng nhập tay vào ô Số tiền bảo hiểm
 
 ---
 
-## Skill 8: Tinh chỉnh OCR không cần API key (ocrSmart)
+## Skill 7: Tinh chỉnh OCR không cần API key (ocrSmart)
 
 **Vị trí:** `ocrSmart()`, `preprocessSoft()`, `preprocessBinary()`, `scoreExtraction()`, `vinValid()`, `textFromWords()`.
 

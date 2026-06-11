@@ -38,7 +38,6 @@ toast()              — Thông báo nổi thay alert() (#toastWrap, kiểu ok/w
 copySummary()        — Sao chép tóm tắt báo giá vào clipboard
 exportHistoryCSV()   — Xuất lịch sử ra file CSV (BOM UTF-8, mở được bằng Excel)
 saveHistory()        — Lưu localStorage key: 'pti_h'
-openPriceModal()     — Modal tra cứu giá xe thủ công
 processOCRFiles()    — Xử lý NHIỀU ảnh tuần tự: Claude Vision (nếu có key) hoặc ocrSmart
 ocrSmart()           — OCR KHÔNG CẦN API KEY: best-of-2 passes Tesseract —
                        preprocessSoft (giảm kênh đỏ, giữ chữ dưới mộc đỏ) +
@@ -52,7 +51,7 @@ renderVehicleTable() — Render bảng thông tin xe có thể edit inline (#veh
 syncVitField()       — Đồng bộ edit inline bảng → hidden input
 detectVersion()      — Phát hiện phiên bản xe từ model code + số khung
 modelFromChassis()   — Giải mã tên model từ VIN (KIA ND5 → CARNIVAL...)
-autoSearchPrice()    — Tìm giá thị trường: chotot.com → bonbanh → oto.com.vn → xegiatot
+autoSearchPrice()    — Tìm giá thị trường qua API Chợ Tốt (nguồn duy nhất)
 calcIQRMedian()      — Tính giá trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu
 applyAutoPrice()     — Điền giá vào f_value
 resetOCRZone()       — Reset khung upload + xóa bảng + xóa hidden inputs
@@ -150,9 +149,10 @@ Kết quả hiển thị thêm: bảng so sánh phí theo 4 mức khấu trừ (
 | 3–5 năm | ×0.85 |
 
 ## Tra cứu giá xe
-- **Tự động** (sau OCR hoặc nút 💹): `autoSearchPrice()` → API Chợ Tốt qua `fetchJSONWithProxy()`
-  (trực tiếp → r.jina.ai → allorigins) → **luôn tự điền vào ô Số tiền bảo hiểm** + toast
-- **Thủ công** (fallback): modal với link xeoto123.com, bonbanh.com, carmudi.vn, oto.com.vn, Google → nhập tay → "Dùng giá này"
+- Chỉ có **tra cứu tự động** (sau OCR hoặc nút 💹 "Tra giá trị xe thị trường"): `autoSearchPrice()` → API Chợ Tốt
+  qua `fetchJSONWithProxy()` (trực tiếp → r.jina.ai → allorigins) → **luôn tự điền vào ô Số tiền bảo hiểm** + toast
+- Bố cục card "Tra cứu giá trị xe": dữ liệu tra cứu (`#priceDataPanel`) ở trên → trạng thái (`#autoPriceStatus`) → nút tra giá ở dưới
+- Đã xóa tra cứu thủ công (modal `priceModal`, `openPriceModal`, `checkPriceLookup`, `priceLookupTrigger`) — không tìm được giá thì nhập trực tiếp vào ô Số tiền bảo hiểm
 
 ## Phụ thuộc bên ngoài
 - Chart.js: `https://cdn.jsdelivr.net/npm/chart.js`
