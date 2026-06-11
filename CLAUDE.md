@@ -52,7 +52,8 @@ syncVitField()       — Đồng bộ edit inline bảng → hidden input
 detectVersion()      — Phát hiện phiên bản xe từ model code + số khung
 modelFromChassis()   — Giải mã tên model từ VIN (KIA ND5 → CARNIVAL...)
 autoSearchPrice()    — Tìm giá thị trường qua API Chợ Tốt (nguồn duy nhất)
-calcIQRMedian()      — Tính giá trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu
+calcMarketPrice()    — Giá thị trường tại thời điểm tra cứu: lọc ngoại lệ IQR (hàng rào 1.5×IQR),
+                       lấy trung vị của tối đa 20 tin rao mới nhất (theo list_time)
 resetOCRZone()       — Reset khung upload + xóa bảng + xóa hidden inputs
 getApiKey()          — Đọc Anthropic API key từ localStorage key: 'pti_anthropic_key' (đặt key qua DevTools)
 loadTesseract()      — Lazy-load Tesseract.js khi cần OCR lần đầu (không chặn render lúc mở trang)
@@ -93,7 +94,7 @@ fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa C
   - 2 lượt query: "brand model year" → "brand model" (rộng hơn nếu lượt 1 <3 tin)
   - Lọc năm ±2: `adYear()` đọc field `year` hoặc trích từ tiêu đề tin rao
   - (Đã bỏ bonbanh/oto.com.vn/xegiatot — trang không chứa giá tĩnh, proxy cũ chết)
-- **Công thức giá**: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu (`calcIQRMedian`)
+- **Công thức giá**: trung vị của tối đa 20 tin rao mới nhất sau khi lọc ngoại lệ IQR (`calcMarketPrice`) — bám sát giá đang rao tại thời điểm tra cứu
 - **Giá tìm được LUÔN tự điền vào ô Số tiền bảo hiểm (`f_value`)** + toast thông báo
 - UI: `#autoPriceStatus` → "Đã điền vào Số tiền BH: X ₫ · N xe · Dao động: Y–Z triệu"
 

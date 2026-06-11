@@ -2537,16 +2537,27 @@ function adYear(a) {
   return m ? parseInt(m[1]) : null;
 }
 
-function calcIQRMedian(prices) {
-  if (!prices.length) return null;
-  const sorted = [...prices].sort((a, b) => a - b);
-  // Bỏ 10% ngoại lệ hai đầu trước khi lấy min/max
-  const cut = Math.max(1, Math.floor(sorted.length * 0.10));
-  const trimmed = sorted.length >= 6 ? sorted.slice(cut, sorted.length - cut) : sorted;
-  const min = trimmed[0];
-  const max = trimmed[trimmed.length - 1];
-  const avg = Math.round((min + max) / 2);
-  return { median: avg, min: sorted[0], max: sorted[sorted.length-1], count: sorted.length };
+// Giá thị trường tại thời điểm tra cứu: lọc ngoại lệ bằng hàng rào IQR,
+// rồi lấy TRUNG VỊ của tối đa 20 tin rao đăng gần nhất (ưu tiên giá đang rao hiện tại)
+function calcMarketPrice(items) {
+  if (!items.length) return null;
+  const sorted = [...items].sort((a, b) => a.price - b.price);
+  let kept = sorted;
+  if (sorted.length >= 6) {
+    const q = p => {
+      const i = (sorted.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
+      return (sorted[lo].price + sorted[hi].price) / 2;
+    };
+    const q1 = q(0.25), q3 = q(0.75), iqr = q3 - q1;
+    kept = sorted.filter(x => x.price >= q1 - 1.5 * iqr && x.price <= q3 + 1.5 * iqr);
+  }
+  // Tin mới nhất phản ánh giá tại thời điểm tra cứu — chỉ dùng tối đa 20 tin gần nhất
+  const recent = [...kept].sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 20);
+  const ps = recent.map(x => x.price).sort((a, b) => a - b);
+  const mid = Math.floor(ps.length / 2);
+  const median = ps.length % 2 ? ps[mid] : Math.round((ps[mid - 1] + ps[mid]) / 2);
+  return { price: median, min: kept[0].price, max: kept[kept.length - 1].price,
+           count: items.length, used: ps.length };
 }
 
 // Trích tên model từ VIN (positions 4-8): dành riêng cho các WMI phổ biến tại VN
@@ -2602,11 +2613,13 @@ async function autoSearchPrice(brand, model, year, version, autoFill = true) {
       if (ay && yearNum) return Math.abs(ay - yearNum) <= 2;
       return true;
     });
-    const prices = ads.map(a => Number(a.price)).filter(p => p >= minP && p <= 8e9);
+    // Giữ kèm thời điểm đăng tin (list_time) để ưu tiên tin mới khi tính giá
+    const items = ads.map(a => ({ price: Number(a.price), time: Number(a.list_time) || 0 }))
+                     .filter(x => x.price >= minP && x.price <= 8e9);
 
-    if (prices.length >= 3) {
-      const r = calcIQRMedian(prices);
-      result = { price: r.median, count: prices.length, source: 'Chợ Tốt', min: r.min, max: r.max, query: q };
+    if (items.length >= 3) {
+      const r = calcMarketPrice(items);
+      result = { price: r.price, count: r.count, used: r.used, source: 'Chợ Tốt', min: r.min, max: r.max, query: q };
       break;
     }
   }
@@ -2654,13 +2667,13 @@ function renderPriceDataPanel(result) {
   const priceStr = Math.round(result.price).toLocaleString('vi-VN');
   panel.innerHTML = `
     <div class="vinfo-item" style="border-left-color:var(--accent);margin-bottom:7px">
-      <div class="vinfo-lab">💰 Giá trung bình thị trường</div>
+      <div class="vinfo-lab">💰 Giá thị trường tại thời điểm tra cứu</div>
       <div class="vinfo-val" style="color:var(--accent);font-size: 26px;font-family:var(--mono)">${priceStr} ₫</div>
     </div>
     <div class="vinfo-grid">
       <div class="vinfo-item">
         <div class="vinfo-lab">Số tin khảo sát</div>
-        <div class="vinfo-val">${result.count} tin rao</div>
+        <div class="vinfo-val">${result.count} tin rao${result.used && result.used < result.count ? ` · dùng ${result.used} tin mới nhất` : ''}</div>
       </div>
       <div class="vinfo-item">
         <div class="vinfo-lab">Nguồn dữ liệu</div>
@@ -2675,7 +2688,7 @@ function renderPriceDataPanel(result) {
         <div class="vinfo-val">${result.query || '--'}</div>
       </div>
     </div>
-    <div style="font-size: 13px;color:var(--text-dim);margin-top:7px">Công thức: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu · lọc năm ±2</div>`;
+    <div style="font-size: 13px;color:var(--text-dim);margin-top:7px">Công thức: trung vị của tối đa 20 tin rao mới nhất sau khi lọc ngoại lệ IQR · lọc năm ±2</div>`;
 }
 
 function updateInfoTab() {

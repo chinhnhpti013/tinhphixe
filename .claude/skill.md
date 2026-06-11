@@ -105,7 +105,7 @@ BS = [
 - 2 lượt query: `"{brand} {model} {year}"` → nếu <3 tin thì `"{brand} {model}"` (rộng hơn)
 - Field `ads[].year` thường rỗng → `adYear()` trích năm từ tiêu đề tin (`subject`), lọc ±2 năm
 - Giá lọc: `price_min=100000000` (200M nếu >9 chỗ), `price_max=8000000000`
-- Công thức: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu (`calcIQRMedian`)
+- Công thức: trung vị của tối đa 20 tin rao mới nhất (theo `list_time`) sau khi lọc ngoại lệ IQR (`calcMarketPrice`)
 - **Giá tìm được LUÔN tự điền vào ô Số tiền bảo hiểm (`f_value`)** trong `showPriceResult()` + toast
 - Khi thêm proxy mới: chèn vào giữa chuỗi trong `fetchJSONWithProxy`, giữ timeout hợp lý (15–20s)
 - **Bố cục card "Tra cứu giá trị xe"** (từ v1.4.0): `#priceDataPanel` (dữ liệu) trên →
