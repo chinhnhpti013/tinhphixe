@@ -1333,6 +1333,34 @@ const BS = [
   {c:'BS27', n:'đầu kéo lắp hệ thống thủy lực', r:0.15},
 ];
 
+// Phí BS phụ thuộc THỜI GIAN SỬ DỤNG XE — theo Phụ lục 01 biểu phí VCX 10.2025:
+// BS02 tăng dần theo tuổi; BS05/BS26 tăng giá từ 6 năm, xe 10–15 năm phải trình TCT;
+// BS07 chỉ áp dụng xe mới 100%. Trả về {r} hoặc {blocked: lý do}.
+function bsEffective(code, baseR, age) {
+  switch (code) {
+    case 'BS02': // bảo hiểm thay thế mới (không khấu hao)
+      if (age < 3)  return { r: 0 };
+      if (age < 6)  return { r: 0.10 };
+      if (age < 10) return { r: 0.20 };
+      return { r: 0.30 };
+    case 'BS05': // lựa chọn cơ sở sửa chữa
+      if (age < 6)  return { r: 0.45 };
+      if (age < 9)  return { r: 0.50 };
+      if (age < 10) return { r: 0.75 };
+      return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
+    case 'BS26': // phụ tùng thay thế chính hãng
+      if (age < 6)  return { r: 0.13 };
+      if (age < 9)  return { r: 0.15 };
+      if (age < 10) return { r: 0.22 };
+      return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
+    case 'BS07': // thay xe mới năm đầu tiên
+      if (age < 1)  return { r: baseR };
+      return { blocked: 'chỉ áp dụng cho xe mới 100%' };
+    default:
+      return { r: baseR };
+  }
+}
+
 // Set-based BS selection (no checkboxes)
 const bsSelected = new Set();
 
@@ -1446,15 +1474,22 @@ function exportHistoryCSV() {
 // RENDER BS LIST — single-line cards, no checkboxes
 // ============================================================
 function renderBS() {
-  $('bsList').innerHTML = BS.map(b => `
-    <div class="bs-card" id="bsc-${b.c}" onclick="toggleBS('${b.c}')">
+  // Tỷ lệ BS thay đổi theo thời gian sử dụng xe — đọc từ Năm sản xuất nếu có
+  const yearVal = parseInt($('f_year') && $('f_year').value) || (new Date().getFullYear() - 1);
+  const age = getAge(yearVal);
+  $('bsList').innerHTML = BS.map(b => {
+    const eff = bsEffective(b.c, b.r, age);
+    const rateTxt = eff.blocked
+      ? `<span title="${eff.blocked}" style="color:var(--warn)">Trình TCT</span>`
+      : `+${eff.r.toFixed(2)}%`;
+    return `
+    <div class="bs-card${bsSelected.has(b.c) ? ' selected' : ''}" id="bsc-${b.c}" onclick="toggleBS('${b.c}')">
       <span class="bs-code">${b.c}</span>
       <span class="bs-name">${b.n}</span>
-      <span class="bs-rate">+${b.r.toFixed(2)}%</span>
-    </div>
-  `).join('');
+      <span class="bs-rate">${rateTxt}</span>
+    </div>`;
+  }).join('');
 }
-
 function toggleBS(code) {
   if (bsSelected.has(code)) {
     bsSelected.delete(code);
@@ -2300,6 +2335,7 @@ function syncVitField(id, val) {
   if (!el) return;
   el.value = val;
   if (id === 'f_model') onModelInput && onModelInput();
+  if (id === 'f_year') renderBS(); // tỷ lệ BS đổi theo tuổi xe
 }
 
 function syncTransport(cb) {
@@ -2337,6 +2373,7 @@ function fillFromOCR(extracted) {
   $('ocrResultTags').innerHTML = '';
   renderVehicleTable();
   $('vehicleInfoTable').style.display = 'block';
+  renderBS(); // cập nhật tỷ lệ BS theo tuổi xe vừa OCR được
 
   // Auto-detect vehicle type
   if (!$('f_type').value && (extracted.seats || extracted.weight)) {
@@ -2772,7 +2809,7 @@ function resetForm() {
   });
   // Clear BS
   bsSelected.clear();
-  document.querySelectorAll('.bs-card').forEach(el => el.classList.remove('selected'));
+  renderBS(); // vẽ lại card BS với tỷ lệ mặc định (năm sản xuất đã xóa)
   $('bsCountBadge').textContent = '0 đã chọn';
   if (renewOn) toggleRenewal();
   $('resultContent').style.display = 'none';
@@ -2894,11 +2931,16 @@ function _calc() {
     const typeData = RATES[typeId];
     const baseRate = typeData.r[ageKey][vi];
 
-    // BS rates using Set
+    // BS rates using Set — tỷ lệ phụ thuộc thời gian sử dụng xe (Phụ lục 01)
     let bsRate = 0;
     const selectedBS = [];
+    const bsBlocked = [];
     BS.forEach(b => {
-      if (bsSelected.has(b.c)) { bsRate += b.r; selectedBS.push(b); }
+      if (!bsSelected.has(b.c)) return;
+      const eff = bsEffective(b.c, b.r, age);
+      if (eff.blocked) { bsBlocked.push({ ...b, reason: eff.blocked }); return; }
+      bsRate += eff.r;
+      selectedBS.push({ ...b, r: eff.r });
     });
 
     const totalRate = baseRate + bsRate;
@@ -2976,8 +3018,10 @@ function _calc() {
     // Cảnh báo nghiệp vụ thông minh
     const warns = [];
     if (age > 15) warns.push(`Xe ${age} năm tuổi — vượt khung biểu phí chuẩn (tối đa nhóm 10–15 năm). Đang áp tỷ lệ nhóm 10–15 năm, cần thẩm định trước khi cấp đơn.`);
+    bsBlocked.forEach(b => warns.push(`${b.c} (${b.n}) KHÔNG được tính vào phí: ${b.reason} — xe đã sử dụng ${age} năm.`));
     const KDVT_TYPES = [5, 7, 11, 12, 13];
     const isKDVT = $('f_transport').checked;
+    if (age >= 10 && (isKDVT || KDVT_TYPES.includes(typeId))) warns.push(`Xe kinh doanh vận tải ${age} năm tuổi — biểu phí KDVT/taxi chỉ áp dụng cho xe dưới 10 năm, hồ sơ phải trình TCT phê duyệt.`);
     if (isKDVT && [1, 4].includes(typeId)) warns.push('Giấy tờ xe ghi CÓ kinh doanh vận tải nhưng loại xe đang chọn là nhóm KHÔNG KDVT — kiểm tra lại loại xe (nhóm 5/7/11/12/13).');
     if (!isKDVT && KDVT_TYPES.includes(typeId)) warns.push('Loại xe đang chọn thuộc nhóm kinh doanh vận tải nhưng giấy tờ chưa đánh dấu KDVT — xác nhận lại mục đích sử dụng.');
     if (value >= 5e9) warns.push('Số tiền bảo hiểm ≥ 5 tỷ — hồ sơ thuộc diện phê duyệt đặc biệt, cần xin ý kiến Ban Tổng Giám đốc theo phân cấp.');
@@ -2996,7 +3040,10 @@ function _calc() {
       html += `<div class="alert alert-warn" style="margin-bottom:7px;font-size: 16px">⚠️ ${w}</div>`;
     });
     html += bdRow(`Tỷ lệ phí cơ bản (xe ${ageLabel}, ${V_LABELS[vi]})`, baseRate.toFixed(2) + '%', 'neutral');
-    if (bsRate > 0) html += bdRow(`Điều khoản BS (${selectedBS.map(b=>b.c).join(',')})`, '+' + bsRate.toFixed(2) + '%', 'pos');
+    if (bsRate > 0) {
+      const ageDep = selectedBS.some(b => ['BS02','BS05','BS26'].includes(b.c)) ? ` · theo tuổi xe ${ageLabel}` : '';
+      html += bdRow(`Điều khoản BS (${selectedBS.map(b=>b.c).join(',')})${ageDep}`, '+' + bsRate.toFixed(2) + '%', 'pos');
+    }
     html += bdRow('Tỷ lệ phí tổng cộng', totalRate.toFixed(2) + '%', 'neutral');
     html += '<div class="divider"></div>';
     html += bdRowH('Phí bảo hiểm gốc (lần đầu)', fmt(baseFee));

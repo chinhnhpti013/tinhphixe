@@ -30,6 +30,9 @@ Mini web app tính phí bảo hiểm vật chất xe ô tô (VCX) theo quy tắc
 ```
 RATES{}              — Bảng tỷ lệ phí: 14 loại xe × 4 nhóm tuổi × 7 mức giá trị
 BS[]                 — 17 điều khoản bổ sung BS01–BS27
+bsEffective()        — Tỷ lệ BS theo THỜI GIAN SỬ DỤNG XE (Phụ lục 01): BS02 0/0.10/0.20/0.30%
+                       theo nhóm tuổi; BS05 0.45/0.50/0.75%, BS26 0.13/0.15/0.22% (xe ≥10 năm
+                       chặn, trình TCT); BS07 chỉ xe mới 100%; mã khác giữ tỷ lệ cố định
 bsSelected           — Set<string> lưu mã BS đang được chọn (không dùng checkbox)
 calculate()          — Engine tính phí: làm tròn nghìn ₫, VAT 10%, cảnh báo nghiệp vụ
                        (xe >15 năm, KDVT lệch loại xe, STBH ≥5 tỷ), so sánh 4 mức khấu trừ
@@ -100,6 +103,9 @@ fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa C
 
 ### Điều khoản bổ sung
 - Mỗi card 1 dòng: `[MÃ]  [tên điều khoản]  [+x.xx%]`
+- **Tỷ lệ hiển thị trên card đổi theo tuổi xe** (`renderBS` đọc `f_year` → `bsEffective`);
+  render lại khi sửa năm trong bảng xe (`syncVitField`), sau OCR (`fillFromOCR`) và khi Reset
+- Xe ≥10 năm: BS05/BS26 hiện "Trình TCT" (vẫn click được nhưng `_calc` loại khỏi phí + cảnh báo)
 - Không dùng checkbox — click card để toggle
 - Khi chọn: card chìm xuống (`translateY(1px)` + `inset box-shadow` + viền 2px `--primary`)
 - Badge đếm số điều khoản đã chọn hiển thị trên card-header
@@ -110,7 +116,21 @@ fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa C
 ```
 Phí = (tỷ lệ cơ bản + tổng tỷ lệ BS) × giá trị xe
 Tỷ lệ cơ bản = RATES[loại xe].r[nhóm tuổi][mức giá trị]
+Tỷ lệ BS     = bsEffective(mã BS, tuổi xe) — BS02/BS05/BS26 tăng theo tuổi xe
 ```
+
+### A2. Thời gian sử dụng xe (tuổi xe = năm hiện tại − năm sản xuất)
+| Nhóm tuổi | Tỷ lệ cơ bản | BS02 | BS05 | BS26 |
+|-----------|--------------|------|------|------|
+| < 3 năm | RATES a03 | +0% | +0.45% | +0.13% |
+| 3–6 năm | RATES a36 | +0.10% | +0.45% | +0.13% |
+| 6–9 năm | RATES a610 | +0.20% | +0.50% | +0.15% |
+| 9–10 năm | RATES a610 | +0.20% | +0.75% | +0.22% |
+| 10–15 năm | RATES a1015 | +0.30% | Trình TCT | Trình TCT |
+| > 15 năm | a1015 + cảnh báo thẩm định | | | |
+
+- BS07 chỉ áp dụng xe mới 100% (tuổi < 1 năm), xe cũ bị loại + cảnh báo
+- Xe KDVT/taxi (type 5/7/11/12/13 hoặc checkbox KDVT) ≥10 năm: ngoài biểu phí, cảnh báo trình TCT
 
 ### B. Tăng / Giảm phí
 | Điều kiện | Hệ số |
