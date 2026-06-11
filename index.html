@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Công cụ tra cứu giá trị xe và tính phí bảo hiểm xe ô tô - PTI</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ===== TOKENS — Soft Sky Glass ===== */
@@ -212,8 +212,6 @@ body::after {
 
 .btn-sm { padding: 8px 14px; font-size: 17px; border-radius: 6px; }
 .btn-lg { padding: 16px 30px; font-size: 21px; border-radius: 10px; }
-.btn-full { width: 100%; }
-.btn-icon { width: 46px; height: 46px; padding: 0; border-radius: 7px; font-size: 21px; }
 
 /* ===== LAYOUT ===== */
 .app-shell {
@@ -440,15 +438,6 @@ select option { background: var(--surface2); }
 
 .ocr-tag.ok { background: rgba(0,229,180,0.12); color: var(--accent); }
 .ocr-tag.miss { background: rgba(255,179,71,0.12); color: var(--warn); }
-
-.ocr-preview {
-  width: 100%;
-  max-height: 100px;
-  object-fit: cover;
-  border-radius: 7px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border);
-}
 
 /* ===== SECTION LABEL ===== */
 .sec-label {
@@ -741,8 +730,6 @@ select option { background: var(--surface2); }
 }
 
 .alert-warn { background: rgba(255,179,71,0.08); border: 1px solid rgba(255,179,71,0.25); color: var(--warn); }
-.alert-info { background: rgba(77,159,255,0.08); border: 1px solid rgba(77,159,255,0.2); color: #7ab8ff; }
-.alert-ok { background: rgba(0,229,180,0.08); border: 1px solid rgba(0,229,180,0.2); color: var(--accent); }
 
 /* ===== VEHICLE INFO GRID ===== */
 .vinfo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -784,21 +771,6 @@ select option { background: var(--surface2); }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
-
-/* ===== BADGE ===== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-size: 15px;
-  font-weight: 700;
-}
-.badge-blue { background: rgba(77,159,255,0.12); color: var(--primary); }
-.badge-green { background: rgba(0,229,180,0.12); color: var(--accent); }
-.badge-warn { background: rgba(255,179,71,0.12); color: var(--warn); }
-.badge-red { background: rgba(255,92,122,0.12); color: var(--danger); }
 
 /* Mobile tweaks */
 @media (max-width: 480px) {
@@ -1501,28 +1473,8 @@ function getApiKey() {
   return localStorage.getItem('pti_anthropic_key') || '';
 }
 
-function saveApiKey() {
-  const key = $('apiKeyInput').value.trim();
-  if (!key.startsWith('sk-ant-')) {
-    toast('API key không hợp lệ — key phải bắt đầu bằng sk-ant-', 'err');
-    return;
-  }
-  localStorage.setItem('pti_anthropic_key', key);
-  const panel = $('apiKeySetup');
-  if (panel) panel.style.display = 'none';
-  updateOcrZoneBadge();
-  toast('Đã lưu API key — OCR sẽ dùng Claude Vision');
-}
-
 // UI nhập key đã bỏ từ v1.4.0 — key (nếu muốn) đặt thủ công qua DevTools:
 // localStorage.setItem('pti_anthropic_key', 'sk-ant-...')
-function toggleApiKeySetup() {
-  const panel = $('apiKeySetup');
-  if (!panel) return;
-  const show = panel.style.display === 'none';
-  panel.style.display = show ? 'block' : 'none';
-}
-
 function updateOcrZoneBadge() {
   const sub = $('ocrZoneSub');
   if (!sub) return;
@@ -1761,7 +1713,25 @@ function scoreExtraction(ext) {
 // Lượt 1: ảnh mềm (giữ chữ dưới mộc đỏ) → nếu đủ tốt thì dừng
 // Lượt 2: ảnh nhị phân Otsu → hợp nhất trường tốt nhất của cả 2 lượt
 // ============================================================
+// Tesseract.js chỉ tải khi cần OCR lần đầu — không chặn render lúc mở trang
+let _tessLoad = null;
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  if (!_tessLoad) {
+    _tessLoad = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = resolve;
+      s.onerror = () => { _tessLoad = null; reject(new Error('Không tải được thư viện OCR — kiểm tra kết nối mạng')); };
+      document.head.appendChild(s);
+    });
+  }
+  return _tessLoad;
+}
+
 async function ocrSmart(dataURL, onProgress) {
+  onProgress(1, 'đang tải thư viện OCR...');
+  await loadTesseract();
   const passes = [
     { name: 'tương phản mềm', prep: preprocessSoft },
     { name: 'nhị phân Otsu',  prep: preprocessBinary },
@@ -2680,14 +2650,6 @@ function renderPriceDataPanel(result) {
     <div style="font-size: 13px;color:var(--text-dim);margin-top:7px">Công thức: trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu · lọc năm ±2</div>`;
 }
 
-function applyAutoPrice(price) {
-  $('f_value').value = Math.round(price);
-  updateValueFmt();
-  $('autoPriceIcon').textContent = '✅';
-  $('autoPriceLabel').innerHTML = `Đã áp dụng giá thị trường: <strong style="color:var(--primary)">${Math.round(price).toLocaleString('vi-VN')} ₫</strong>`;
-  $('f_value').scrollIntoView({ behavior:'smooth', block:'center' });
-}
-
 function updateInfoTab() {
   const el = $('infoTabContent');
   if (!el) return; // phần tử không tồn tại trong layout hiện tại — tránh TypeError
@@ -2758,25 +2720,6 @@ function toggleRenewal() {
 function checkGap() {
   const g = parseInt($('f_gap').value) || 0;
   $('gapAlert').style.display = g > 12 ? 'flex' : 'none';
-}
-
-function fillDemo() {
-  $('f_plate').value = '14A-894.22';
-  $('f_owner').value = 'ĐỖ THU THỦY';
-  $('f_addr').value  = 'Tổ 5, Khu 3, Thanh Sơn, Uông Bí, Quảng Ninh';
-  $('f_brand').value = 'MITSUBISHI';
-  $('f_model').value = 'XFORCE P1GR1WTGLVVT';
-  $('f_chassis').value = 'MK2XTGR1WSN005052';
-  $('f_engine').value  = '4A91KCD6387';
-  $('f_year').value  = '2024';
-  $('f_seats').value = '5';
-  $('f_type').value  = '1';
-  $('f_value').value = '850000000';
-  updateValueFmt();
-  $('f_ctype').value  = 'personal';
-  $('f_count').value  = '1';
-  $('f_dur').value   = '12';
-  $('f_deduct').value = '0';
 }
 
 function resetForm() {

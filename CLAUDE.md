@@ -53,9 +53,9 @@ detectVersion()      — Phát hiện phiên bản xe từ model code + số khu
 modelFromChassis()   — Giải mã tên model từ VIN (KIA ND5 → CARNIVAL...)
 autoSearchPrice()    — Tìm giá thị trường qua API Chợ Tốt (nguồn duy nhất)
 calcIQRMedian()      — Tính giá trung bình (min+max)/2 sau khi cắt 10% ngoại lệ hai đầu
-applyAutoPrice()     — Điền giá vào f_value
 resetOCRZone()       — Reset khung upload + xóa bảng + xóa hidden inputs
-getApiKey/saveApiKey — Quản lý Anthropic API key trong localStorage key: 'pti_anthropic_key'
+getApiKey()          — Đọc Anthropic API key từ localStorage key: 'pti_anthropic_key' (đặt key qua DevTools)
+loadTesseract()      — Lazy-load Tesseract.js khi cần OCR lần đầu (không chặn render lúc mở trang)
 correctVIN()         — Sửa lỗi OCR cho số khung (S→5 tại pos digit, B→8, I→1...)
 fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa CARNFVAL→CARNIVAL
 ```
@@ -155,8 +155,8 @@ Kết quả hiển thị thêm: bảng so sánh phí theo 4 mức khấu trừ (
 - Đã xóa tra cứu thủ công (modal `priceModal`, `openPriceModal`, `checkPriceLookup`, `priceLookupTrigger`) — không tìm được giá thì nhập trực tiếp vào ô Số tiền bảo hiểm
 
 ## Phụ thuộc bên ngoài
-- Chart.js: `https://cdn.jsdelivr.net/npm/chart.js`
-- Tesseract.js v5: `https://unpkg.com/tesseract.js@5/dist/tesseract.min.js` (OCR)
+- Chart.js: `https://cdn.jsdelivr.net/npm/chart.js` (tải `defer`)
+- Tesseract.js v5: `https://unpkg.com/tesseract.js@5/dist/tesseract.min.js` (OCR — lazy-load qua `loadTesseract()` khi OCR lần đầu, không nằm trong `<head>`)
 - Google Fonts: Sora + JetBrains Mono
 - Không có backend, không có framework, không cần build
 
