@@ -2811,7 +2811,15 @@ function validate() {
   }
   if (year && (year < 1990 || year > new Date().getFullYear() + 1)) {
     $('err_year').textContent = 'Năm sản xuất không hợp lệ';
+    $('f_year').classList.add('has-error');
     ok = false;
+  }
+  // Nút Tính phí ở cuối trang, lỗi hiện ở đầu form — phải toast + cuộn tới ô lỗi
+  // để người dùng không tưởng nút bị "chết"
+  if (!ok) {
+    toast('Chưa tính được — kiểm tra các ô viền đỏ (Loại xe, Số tiền BH...)', 'err');
+    const bad = document.querySelector('.has-error');
+    if (bad) bad.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   return ok;
 }
