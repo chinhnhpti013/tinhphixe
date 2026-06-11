@@ -2095,11 +2095,15 @@ function parseOCRText(text) {
   // ── Số máy ────────────────────────────────────────────────────────────────
   // Giấy đăng ký:  "Số máy (Engine N°): D4HEPH601440"
   // Giấy kiểm định:"Số động cơ (Engine No): D4HEPH601440"
-  const enginePat = /(?:số\s*(?:máy|động\s*cơ)|engine\s*(?:n[o°º]\.?|number)?|động\s*cơ\s*(?:n[o°º]\.?)?)[:\s).(]+([A-Z0-9][A-Z0-9\s\-®©°]{3,25})/i;
-  const em = text.match(enginePat);
-  if (em) {
+  // Bỏ qua cụm nhãn tiếng Anh "(Engine No)" để không bắt nhầm chữ ENGINE làm số máy
+  const enginePat = /(?:số\s*(?:máy|động\s*cơ)|engine\s*(?:n[o°º]\.?|number)?|động\s*cơ\s*(?:n[o°º]\.?)?)\s*(?:\([^)\n]{0,30}\))?[:\s).(]*([A-Z0-9][A-Z0-9 \-®©°]{3,25})/gi;
+  let em;
+  while ((em = enginePat.exec(text)) !== null) {
     const ev = stripNoise(em[1]);
-    if (ev.length >= 4 && !/^(number|code|type)$/i.test(ev)) extracted.engine = ev.toUpperCase();
+    if (ev.length >= 4 && !/^(number|code|type)$/i.test(ev) && !/^ENGINE/i.test(ev)) {
+      extracted.engine = ev.toUpperCase();
+      break;
+    }
   }
 
   // ── Năm sản xuất ──────────────────────────────────────────────────────────
@@ -2194,8 +2198,8 @@ function parseOCRText(text) {
   // Giấy đăng ký:   "Số loại(Model code): CARNIVAL"
   // Giấy kiểm định: "Mã kiểu loại (Model code): KA4 2.2 AT FL8"
   const modelPats = [
-    /(?:mã\s*kiểu\s*loại|model\s*code)[:\s()A-Za-z]{0,20}([A-Z][A-Z0-9][A-Z0-9\s\.\-]{1,25})/i,
-    /(?:số\s*loại)[:\s()A-Za-z]{0,15}([A-Z][A-Z0-9\-\.]{2,20})/i,
+    // Bỏ qua nhãn "(Model code)" để không nuốt mất đầu giá trị: "SONET QY PE..." → SONET
+    /(?:mã\s*kiểu\s*loại|model\s*code|số\s*loại)\s*(?:\([^)\n]{0,30}\))?[\s:)."']*([A-Z][A-Z0-9][A-Z0-9\s\.\-]{1,25})/i,
     /(?:kiểu\s*(?:loại|xe))[:\s]+([A-Z0-9][A-Z0-9\s\-\.]{2,25})/i,
   ];
   for (const mp of modelPats) {
@@ -2207,6 +2211,16 @@ function parseOCRText(text) {
     }
   }
 
+  // ── Ghép nhãn hiệu + tên model ───────────────────────────────────────────
+  // "KIA" + Mã kiểu loại "SONET QY PE 1.5G CVT FH5" → nhãn hiệu "KIA SONET"
+  // Chỉ ghép khi cụm đầu là chữ thuần (tên model thật), bỏ qua mã nhà máy (KA4, FH5...)
+  if (extracted.brand && extracted.model) {
+    const tok = extracted.model.split(/\s+/)[0];
+    if (/^[A-Z]{3,}$/.test(tok) && !extracted.brand.toUpperCase().includes(tok)) {
+      extracted.brand = `${extracted.brand} ${tok}`;
+    }
+  }
+
   // ── Số chỗ ngồi ──────────────────────────────────────────────────────────
   // "Số chỗ ngồi (Seats): 8" hoặc "chỗ ngồi đến 8 chỗ"
   const seatsM = text.match(/(?:số\s*chỗ\s*(?:ngồi)?|seats)[^0-9]{0,30}(\d{1,2})\b/i)
@@ -2215,8 +2229,13 @@ function parseOCRText(text) {
 
   // ── Nước sản xuất ────────────────────────────────────────────────────────
   // "Năm, Nước sản xuất: 2023, Việt Nam"
-  const countryM = text.match(/(?:năm[,\s]*nước\s*sản\s*xuất|country\s*of\s*(?:mfg|manufacture))[:\s,]*\d{4}[,\s]+([A-Za-zÀ-ỹ\s]{3,30})/i);
-  if (countryM) extracted.country = countryM[1].trim().replace(/\s+/g,' ');
+  // Chỉ lấy phần chữ CÙNG DÒNG sau năm — không tràn sang dòng tiếng Anh bên dưới
+  const countryM = text.match(/(?:năm[,\s]*nước\s*sản\s*xuất|country\s*of\s*(?:mfg|manufacture))[:\s,]*\d{4}[,\s]+([A-Za-zÀ-ỹ][A-Za-zÀ-ỹ ]{2,29})/i);
+  if (countryM) {
+    let cv = countryM[1].trim().replace(/\s+/g, ' ');
+    cv = cv.replace(/\s+[A-Za-z]$/, ''); // bỏ ký tự lẻ OCR dính cuối ("Việt Nam v" → "Việt Nam")
+    extracted.country = cv;
+  }
 
   // ── Kinh doanh vận tải ───────────────────────────────────────────────────
   // Giấy đăng ký có ô "Kinh doanh vận tải" với dấu X hoặc check
@@ -2554,13 +2573,16 @@ async function autoSearchPrice(brand, model, year, version, autoFill = true) {
   const chassis = $('f_chassis').value.trim();
   const chassisModel = modelFromChassis(chassis, brand);
   const modelBase = chassisModel || (version || model || '').split(/\s/)[0];
+  // Nhãn hiệu có thể đã chứa tên model ("KIA SONET") — tránh lặp từ trong từ khóa
+  const modelQ = (brand || '').toUpperCase().split(/\s+/).includes((modelBase || '').toUpperCase()) ? '' : modelBase;
   const seats = parseInt($('f_seats').value) || 0;
   const minP  = seats > 9 ? 200e6 : 100e6; // xe khách thường đắt hơn
 
   // Thử lần lượt: query đủ (kèm năm) → query rộng (bỏ năm, lọc năm theo tiêu đề tin)
+  // VD: brand "KIA SONET" + năm 2024 → "KIA SONET 2024"
   const queries = [
-    `${brand} ${modelBase} ${year}`.replace(/\s+/g, ' ').trim(),
-    `${brand} ${modelBase}`.replace(/\s+/g, ' ').trim(),
+    `${brand} ${modelQ} ${year}`.replace(/\s+/g, ' ').trim(),
+    `${brand} ${modelQ}`.replace(/\s+/g, ' ').trim(),
   ].filter((q, i, arr) => q && arr.indexOf(q) === i);
 
   let result = null;

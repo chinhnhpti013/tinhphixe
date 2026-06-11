@@ -83,6 +83,9 @@ fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa C
 
 ### Tự động tìm giá thị trường
 - Query dựa trên: brand + model (ưu tiên decode từ VIN qua `modelFromChassis`) + year
+- `parseOCRText` ghép nhãn hiệu + cụm chữ đầu Mã kiểu loại thành brand ("KIA" + "SONET QY PE..." → "KIA SONET");
+  chỉ ghép khi cụm đầu là chữ thuần (bỏ qua mã nhà máy như KA4). Query tránh lặp từ khi brand đã chứa model
+  → từ khóa "KIA SONET 2024"
 - Nguồn dữ liệu duy nhất: API Chợ Tốt `gateway.chotot.com/v1/public/ad-listing?cg=2010` (limit=50)
   - ⚠️ API này KHÔNG trả CORS header → browser không fetch trực tiếp được
   - `fetchJSONWithProxy()`: thử trực tiếp → **r.jina.ai** (proxy chính, có CORS, JSON nằm sau
