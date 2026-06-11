@@ -1460,9 +1460,23 @@ function bsEffective(code, baseR, age, typeId) {
       if (age < 6)  return { r: 0.11 };
       if (age < 10) return { r: 0.13 };
       return { blocked: 'xe từ 10 năm phải trình TCT phê duyệt' };
-    case 'BS07': // thay xe mới năm đầu tiên
-      if (age < 1)  return { r: baseR };
-      return { blocked: 'chỉ áp dụng cho xe mới 100%' };
+    case 'BS07': // thay xe mới năm đầu tiên — chỉ xe mới 100%
+      if (age >= 1) return { blocked: 'chỉ áp dụng cho xe mới 100%' };
+      if (t === 9)  return { r: 0.02 }; // xe đầu kéo / xe đông lạnh
+      if (t === 1)  return { r: 0, note: 'xe Van tính 0.01%, xe con thường miễn phí — nếu là Van hãy cộng thủ công' };
+      return { r: 0 }; // các loại xe còn lại: miễn phí
+    case 'BS09': // chi phí thuê xe — PHỤ PHÍ CỐ ĐỊNH = tỷ lệ × 500.000đ/ngày (không phải % giá trị xe)
+      if ([8, 9, 10].includes(t)) return { amt: 649000 };  // 129.8% × 500k — xe tải/đầu kéo/đông lạnh/rơ móc
+      if ([1, 2, 4, 5, 7].includes(t) || !t) return { amt: 852500 }; // 170.5% × 500k — xe con/pickup/xe khách/bus
+      return { blocked: 'biểu phí BS09 không quy định cho loại xe này' };
+    case 'BS13': // thiết bị lắp thêm — đơn vị chủ động, không phụ phí
+      return { r: 0, note: 'không tính phụ phí — phải CỘNG giá trị thiết bị lắp thêm vào Số tiền bảo hiểm' };
+    case 'BS27': // đầu kéo lắp hệ thống thủy lực — đơn vị chủ động, không phụ phí
+      return { r: 0, note: 'không tính phụ phí — phải CỘNG giá trị hệ thống thủy lực vào Số tiền bảo hiểm' };
+    case 'BS01': case 'BS08': case 'BS11': case 'BS19': // Mục 5 Phụ lục 01
+      return { blocked: 'điều khoản phải trình Tổng Công ty' };
+    case 'BS14': case 'BS15': case 'BS17': case 'BS25': // không có biểu phí trong Phụ lục 01
+      return { blocked: 'không có biểu phí trong Phụ lục 01 — trình TCT' };
     default:
       return { r: baseR };
   }
@@ -1582,7 +1596,11 @@ function renderBS() {
     const eff = bsEffective(b.c, b.r, age, $('f_type') && $('f_type').value);
     const rateTxt = eff.blocked
       ? `<span title="${eff.blocked}" style="color:var(--warn)">Trình TCT</span>`
-      : `+${eff.r.toFixed(2)}%`;
+      : eff.amt != null
+        ? `+${eff.amt.toLocaleString('vi-VN')}₫`
+        : eff.note
+          ? `<span title="${eff.note}">+${eff.r.toFixed(2)}%*</span>`
+          : `+${eff.r.toFixed(2)}%`;
     return `
     <div class="bs-card${bsSelected.has(b.c) ? ' selected' : ''}" id="bsc-${b.c}" onclick="toggleBS('${b.c}')">
       <span class="bs-code">${b.c}</span>
@@ -3050,20 +3068,22 @@ function _calc() {
     const officialFloor = pickByAge(band.floor, ai).v || 0.70;
     const floorCoef = floorInput || officialFloor;
 
-    // BS rates using Set — tỷ lệ phụ thuộc thời gian sử dụng xe (Phụ lục 01)
-    let bsRate = 0;
+    // BS rates using Set — tỷ lệ phụ thuộc tuổi xe + loại xe; BS09 là phụ phí cố định ₫ (Phụ lục 01)
+    let bsRate = 0, bsFixedAmt = 0;
     const selectedBS = [];
     const bsBlocked = [];
+    const bsNotes = [];
     BS.forEach(b => {
       if (!bsSelected.has(b.c)) return;
       const eff = bsEffective(b.c, b.r, age, typeId);
       if (eff.blocked) { bsBlocked.push({ ...b, reason: eff.blocked }); return; }
-      bsRate += eff.r;
-      selectedBS.push({ ...b, r: eff.r });
+      if (eff.note) bsNotes.push(`${b.c}: ${eff.note}.`);
+      if (eff.amt != null) { bsFixedAmt += eff.amt; selectedBS.push({ ...b, r: 0, amt: eff.amt }); }
+      else { bsRate += eff.r; selectedBS.push({ ...b, r: eff.r }); }
     });
 
     const totalRate = baseRate + bsRate;
-    const baseFee   = (totalRate / 100) * value;
+    const baseFee   = (totalRate / 100) * value + bsFixedAmt;
 
     // Adjustments
     let factor = 1.0;
@@ -3139,7 +3159,8 @@ function _calc() {
     if (age > 15) warns.push(`Xe ${age} năm tuổi — vượt khung biểu phí chuẩn (tối đa nhóm 10–15 năm). Đang áp tỷ lệ nhóm 10–15 năm, cần thẩm định trước khi cấp đơn.`);
     if (noQuoteWarn) warns.push(`Giá trị xe ${fmtM(value)}₫ dưới 200 triệu — KHÔNG phân cấp khai thác theo biểu phí, phải trình TCT. Đang tạm áp khung "${band.label}".`);
     if (ageFellBack) warns.push(`Nhóm tuổi xe ${ageLabel} nằm ngoài biểu phí của loại xe/khung này — tạm áp tỷ lệ nhóm tuổi gần nhất, hồ sơ phải trình TCT phê duyệt.`);
-    bsBlocked.forEach(b => warns.push(`${b.c} (${b.n}) KHÔNG được tính vào phí: ${b.reason} — xe đã sử dụng ${age} năm.`));
+    bsBlocked.forEach(b => warns.push(`${b.c} (${b.n}) KHÔNG được tính vào phí: ${b.reason}.`));
+    bsNotes.forEach(n => warns.push(n));
     const KDVT_TYPES = [5, 7, 11, 12, 13];
     const isKDVT = $('f_transport').checked;
     if (age >= 10 && (isKDVT || KDVT_TYPES.includes(typeId))) warns.push(`Xe kinh doanh vận tải ${age} năm tuổi — biểu phí KDVT/taxi chỉ áp dụng cho xe dưới 10 năm, hồ sơ phải trình TCT phê duyệt.`);
@@ -3166,8 +3187,12 @@ function _calc() {
       html += bdRow(`Tỷ lệ phí cơ bản (xe ${ageLabel}, ${band.label})`, baseRate.toFixed(2) + '%', 'neutral');
     }
     if (bsRate > 0) {
-      const ageDep = selectedBS.some(b => ['BS02','BS05','BS26'].includes(b.c)) ? ` · theo tuổi xe ${ageLabel}` : '';
-      html += bdRow(`Điều khoản BS (${selectedBS.map(b=>b.c).join(',')})${ageDep}`, '+' + bsRate.toFixed(2) + '%', 'pos');
+      const rateBS = selectedBS.filter(b => b.amt == null);
+      const ageDep = rateBS.some(b => ['BS02','BS05','BS26'].includes(b.c)) ? ` · theo tuổi xe ${ageLabel}` : '';
+      html += bdRow(`Điều khoản BS (${rateBS.map(b=>b.c).join(',')})${ageDep}`, '+' + bsRate.toFixed(2) + '%', 'pos');
+    }
+    if (bsFixedAmt > 0) {
+      html += bdRow(`Phụ phí cố định (${selectedBS.filter(b=>b.amt!=null).map(b=>b.c).join(',')})`, '+' + fmt(bsFixedAmt), 'pos');
     }
     html += bdRow('Tỷ lệ phí tổng cộng', totalRate.toFixed(2) + '%', 'neutral');
     html += '<div class="divider"></div>';
