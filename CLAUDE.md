@@ -28,7 +28,14 @@ Mini web app tính phí bảo hiểm vật chất xe ô tô (VCX) theo quy tắc
 ### JavaScript — Modules chính
 
 ```
-RATES{}              — Bảng tỷ lệ phí: 14 loại xe × 4 nhóm tuổi × 7 mức giá trị
+RATES{}              — Biểu phí GỐC theo Phụ lục 01 (10.2025): 14 loại xe, mỗi loại có khung
+                       (band) riêng — bandBy 'value' (theo Số tiền BH) hoặc 'select' (xe tải
+                       theo tải trọng, rơ móc theo loại — ô chọn #f_band hiện khi cần);
+                       mỗi band: r[4 nhóm tuổi] (%), fixed[4] (phí cố định ₫ cho xe 200–300tr),
+                       floor[4] (hệ số sàn từng ô), null = ngoài biểu phí, noQuote = <200tr
+resolveBand()        — Chọn band theo giá trị xe hoặc lựa chọn người dùng; <200tr → band kế + warn
+pickByAge()          — Lấy giá trị theo nhóm tuổi, ô null lùi về nhóm gần nhất + cảnh báo trình TCT
+updateBandUI()       — Hiện/ẩn ô chọn khung phụ #f_bandWrap khi loại xe là 8 (tải) / 10 (rơ móc)
 BS[]                 — 17 điều khoản bổ sung BS01–BS27
 bsEffective()        — Tỷ lệ BS theo THỜI GIAN SỬ DỤNG XE (Phụ lục 01): BS02 0/0.10/0.20/0.30%
                        theo nhóm tuổi; BS05 0.45/0.50/0.75%, BS26 0.13/0.15/0.22% (xe ≥10 năm
@@ -115,7 +122,10 @@ fuzzyModel()         — Fuzzy match tên model (Levenshtein ≤25%) → sửa C
 ### A. Phí gốc
 ```
 Phí = (tỷ lệ cơ bản + tổng tỷ lệ BS) × giá trị xe
-Tỷ lệ cơ bản = RATES[loại xe].r[nhóm tuổi][mức giá trị]
+Tỷ lệ cơ bản = RATES[loại xe] → resolveBand(giá trị / khung chọn) → band.r[nhóm tuổi]
+Xe 200–300 triệu (loại 1/2/11): phí cơ bản CỐ ĐỊNH 5,5tr (6,5tr nhóm 10–15 năm), quy đổi % tương đương
+Giá trị <200 triệu: không phân cấp khai thác — tạm áp khung 200–300tr + cảnh báo trình TCT
+Ô biểu phí null (taxi/KDVT ≥10 năm, Demo ≥3 năm): lùi nhóm tuổi gần nhất + cảnh báo trình TCT
 Tỷ lệ BS     = bsEffective(mã BS, tuổi xe) — BS02/BS05/BS26 tăng theo tuổi xe
 ```
 
@@ -147,7 +157,9 @@ Tỷ lệ BS     = bsEffective(mã BS, tuổi xe) — BS02/BS05/BS26 tăng theo 
 
 ### C. Phí sàn, làm tròn & VAT
 ```
-Phí sàn = hệ số sàn (default 0.70) × phí gốc lần đầu
+Hệ số sàn = band.floor[nhóm tuổi] của Ô BIỂU PHÍ (0.55–1.00, tự động); ô #f_floor trống = tự động,
+            nhập tay sẽ ghi đè + cảnh báo nếu khác hệ số chính thức
+Phí sàn = hệ số sàn × phí gốc lần đầu
 Phí cuối = max(phí tính, phí sàn), làm tròn đến nghìn đồng
 Tổng thanh toán = phí cuối + VAT 10%
 ```
