@@ -2046,13 +2046,24 @@ async function processOCRFiles(files) {
       let extracted = {};
 
       if (useGeminiVision) {
-        // ── Gemini Vision API (chính xác hơn) ─────────────────────────────
+        // ── Gemini Vision API → fallback Tesseract nếu lỗi ───────────────
         setOCRProgress(pct0 + 10, `Ảnh ${i+1}/${files.length}: gửi đến Gemini Vision...`);
-        extracted = await ocrWithGemini(previews[i], apiKey);
-        setOCRProgress(pct1 - 5, `Ảnh ${i+1}/${files.length}: nhận kết quả Gemini...`);
+        try {
+          extracted = await ocrWithGemini(previews[i], apiKey);
+          setOCRProgress(pct1 - 5, `Ảnh ${i+1}/${files.length}: nhận kết quả Gemini...`);
+        } catch (geminiErr) {
+          const msg = geminiErr.message || '';
+          const is429 = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+          toast(is429
+            ? 'Gemini hết quota — chuyển sang Tesseract OCR'
+            : `Gemini lỗi: ${msg.slice(0,80)} — chuyển Tesseract`,
+            'warn');
+          extracted = await ocrSmart(previews[i], (p, msg2) => {
+            setOCRProgress(pct0 + (p / 100) * (pct1 - pct0), `Ảnh ${i+1}/${files.length}: ${msg2}`);
+          });
+        }
       } else {
         // ── OCR thông minh không cần API key: best-of-2 passes ─────────────
-        // Tesseract được lazy-load bên trong ocrSmart (loadTesseract)
         extracted = await ocrSmart(previews[i], (p, msg) => {
           setOCRProgress(pct0 + (p / 100) * (pct1 - pct0), `Ảnh ${i+1}/${files.length}: ${msg}`);
         });
