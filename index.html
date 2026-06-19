@@ -2272,17 +2272,20 @@ function parseOCRText(text) {
     }
   }
 
-  // ── Số khung (VIN 17 ký tự) ──────────────────────────────────────────────
-  // Giấy đăng ký VN: "Số khung (Chassis No.): VALUE" — phần "(Chassis No.)"
-  // phải được bỏ qua riêng; nếu để trong separator [:\s)(.]* sẽ bắt nhầm
-  // "Chassis" làm giá trị VIN rồi fail length check.
-  const chassisPat = /(?:s[oố06b8]\s*khung|số\s*khung|chassis\s*(?:n[o°º0]\.?|number)?)(?:\s*\([^)\n]{0,40}\))?\s*[:\s]*\n?\s*([A-Z0-9][\sA-Z0-9]{13,22})/i;
+  // ── Số khung (VIN 17 ký tự hoặc số khung ngắn của xe cũ) ────────────────
+  // Giấy đăng ký VN: "Số khung (Chassis N°): F4004323"
+  // Xe cũ / đăng ký đời cũ: số khung có thể chỉ 6-8 ký tự (không theo chuẩn VIN 17)
+  // → Khi tìm thấy nhãn "Số khung": chấp nhận ≥4 ký tự
+  // → Fallback không nhãn: vẫn yêu cầu ≥15 để tránh nhận nhầm
+  const chassisPat = /(?:s[oố06b8]\s*khung|số\s*khung|chassis\s*(?:n[o°º0]\.?|number)?)(?:\s*\([^)\n]{0,40}\))?\s*[:\s]*\n?\s*([A-Z0-9][\sA-Z0-9]{3,22})/i;
   let chassisVal = null;
+  let chassisFromLabel = false;
   const cm = text.match(chassisPat);
   if (cm) {
     chassisVal = cm[1].replace(/[^A-Z0-9]/gi, '').toUpperCase().substring(0, 17);
+    chassisFromLabel = chassisVal.length >= 4;
   }
-  if (!chassisVal || chassisVal.length < 15) {
+  if (!chassisFromLabel) {
     // Fallback 1: VIN bị Tesseract chèn space giữa các nhóm ký tự
     const spaced = text.match(/\b([A-Z0-9]{2,6})\s+([A-Z0-9]{3,6})\s+([A-Z0-9]{3,8})\b/i);
     if (spaced) {
@@ -2290,15 +2293,16 @@ function parseOCRText(text) {
       if (joined.length >= 15) chassisVal = joined.substring(0, 17);
     }
   }
-  if (!chassisVal || chassisVal.length < 15) {
+  if (!chassisFromLabel && (!chassisVal || chassisVal.length < 15)) {
     // Fallback 2: chuỗi liền mạch 15-17 ký tự trông giống VIN
     const raw = text.match(/\b([A-Z0-9]{15,17})\b/i);
     if (raw) chassisVal = raw[1].toUpperCase().substring(0, 17);
   }
   if (chassisVal) {
     const fixed = correctVIN(chassisVal);
-    // Lưu ngay cả khi thiếu 1-2 ký tự (≥15) — thà có còn hơn không có gì
-    if (fixed.length >= 15) extracted.chassis = fixed.substring(0, 17);
+    // Có nhãn: chấp nhận ≥4 ký tự (xe cũ số khung ngắn); không nhãn: ≥15
+    const minLen = chassisFromLabel ? 4 : 15;
+    if (fixed.length >= minLen) extracted.chassis = fixed.substring(0, 17);
   }
 
   // ── Số máy ────────────────────────────────────────────────────────────────
