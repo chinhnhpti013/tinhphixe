@@ -1689,12 +1689,12 @@ Lưu ý bắt buộc:
 - Nếu không đọc được trường nào thì để null
 - Chỉ trả về JSON, không giải thích thêm`;
 
-  // Thử lần lượt — v1=stable (1.5), v1beta=preview (2.0); fallback khi 429/404
+  // Thứ tự ưu tiên: quota riêng nhau, 2.0-flash-lite có 30 RPM (gấp đôi)
   const MODELS = [
-    { m: 'gemini-1.5-flash',      v: 'v1'     },
-    { m: 'gemini-1.5-flash-latest', v: 'v1beta' },
-    { m: 'gemini-2.0-flash-lite', v: 'v1beta' },
-    { m: 'gemini-2.0-flash',      v: 'v1beta' },
+    { m: 'gemini-2.0-flash-lite', v: 'v1beta' }, // 30 RPM free tier
+    { m: 'gemini-1.5-flash-8b',   v: 'v1beta' }, // nhỏ hơn, quota riêng
+    { m: 'gemini-1.5-flash',      v: 'v1'     }, // stable fallback
+    { m: 'gemini-2.0-flash',      v: 'v1beta' }, // mới nhất
   ];
   const body = JSON.stringify({
     contents: [{ parts: [
@@ -1704,8 +1704,14 @@ Lưu ý bắt buộc:
     generationConfig: { maxOutputTokens: 512, temperature: 0 }
   });
 
-  let resp;
-  for (const { m, v } of MODELS) {
+  // Cache model còn quota: lần sau thử thẳng, không thử lại model đã 429
+  const CACHE_KEY = 'pti_gemini_model_idx';
+  const cachedIdx = Math.min(parseInt(localStorage.getItem(CACHE_KEY) || '0', 10), MODELS.length - 1);
+  const orderedModels = [...MODELS.slice(cachedIdx), ...MODELS.slice(0, cachedIdx)];
+
+  let resp, workingIdx = -1;
+  for (let i = 0; i < orderedModels.length; i++) {
+    const { m, v } = orderedModels[i];
     const url = `https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent?key=${apiKey}`;
     resp = await fetch(url, {
       method: 'POST',
@@ -1713,10 +1719,12 @@ Lưu ý bắt buộc:
       body,
       signal: AbortSignal.timeout(30000)
     });
-    if (resp.ok) break;
+    if (resp.ok) { workingIdx = (cachedIdx + i) % MODELS.length; break; }
     const s = resp.status;
     if (s !== 429 && s !== 404) break; // 401/403: sai key → dừng ngay
   }
+  if (workingIdx >= 0) localStorage.setItem(CACHE_KEY, String(workingIdx));
+  else localStorage.removeItem(CACHE_KEY); // reset nếu tất cả đều lỗi
 
   if (!resp.ok) {
     const err = await resp.text();
