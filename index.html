@@ -1689,12 +1689,10 @@ Lưu ý bắt buộc:
 - Nếu không đọc được trường nào thì để null
 - Chỉ trả về JSON, không giải thích thêm`;
 
-  // Thứ tự ưu tiên: quota riêng nhau, 2.0-flash-lite có 30 RPM (gấp đôi)
-  // gemini-1.5-flash đã bị Google deprecated (404 trên cả v1 lẫn v1beta)
+  // Gemini 2.5 — các model 1.5/2.0 đã bị Google shutdown từ 1/6/2026
   const MODELS = [
-    { m: 'gemini-2.0-flash-lite', v: 'v1beta' }, // 30 RPM free tier
-    { m: 'gemini-1.5-flash-8b',   v: 'v1beta' }, // nhỏ hơn, quota riêng
-    { m: 'gemini-2.0-flash',      v: 'v1beta' }, // mới nhất, fallback cuối
+    { m: 'gemini-2.5-flash-lite', v: 'v1beta' }, // 15 RPM, 1000 RPD free tier
+    { m: 'gemini-2.5-flash',      v: 'v1beta' }, // 10 RPM, 250 RPD free tier
   ];
   const body = JSON.stringify({
     contents: [{ parts: [
