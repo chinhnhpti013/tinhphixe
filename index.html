@@ -1658,36 +1658,36 @@ async function ocrWithGemini(dataURL, apiKey) {
   const [header, b64] = dataURL.split(',');
   const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
 
-  const prompt = `Đây là ảnh GIẤY ĐĂNG KÝ XE hoặc GIẤY CHỨNG NHẬN KIỂM ĐỊNH của Việt Nam.
+  const prompt = `Đây là ảnh GIẤY ĐĂNG KÝ XE hoặc GIẤY CHỨNG NHẬN ĐĂNG KÝ XE của Việt Nam.
 
-Tài liệu có dạng bảng 2 cột: CỘT TRÁI là tên trường (nhãn), CỘT PHẢI là GIÁ TRỊ cần lấy.
-QUAN TRỌNG: Chỉ lấy GIÁ TRỊ ở cột phải, KHÔNG lấy tên trường ở cột trái.
+Tài liệu có dạng bảng: nhãn trường ở trái, GIÁ TRỊ ở phải hoặc ngay sau dấu ':'.
+QUAN TRỌNG: Chỉ lấy GIÁ TRỊ, KHÔNG lấy tên nhãn trường.
 
-Ví dụ cấu trúc:
-  "Tên chủ xe / Name of owner"  →  "NGUYEN VAN A"          ← lấy cái này
-  "Nhãn hiệu / Mark"            →  "TOYOTA"                ← lấy cái này
-  "Số khung / Chassis No."      →  "MH8AW3200M8035712"     ← lấy cái này
+Ví dụ:
+  "Tên chủ xe (Owner's full name): NGUYEN VAN A"   → owner = "NGUYEN VAN A"
+  "Số khung (Chassis N°): F4004323"                → chassis = "F4004323"
+  "Số khung (Chassis No.): MH8AW3200M8035712"      → chassis = "MH8AW3200M8035712"
 
 Trả về JSON (chỉ JSON thuần, không markdown):
 {
-  "owner": "Tên chủ xe hoặc tên công ty — chỉ lấy phần sau dấu ':' hoặc cột giá trị",
+  "owner": "Tên chủ xe hoặc tên công ty",
   "addr": "Địa chỉ đầy đủ",
-  "brand": "Nhãn hiệu xe — chỉ tên hãng viết tắt: KIA, TOYOTA, HONDA, MITSUBISHI...",
-  "model": "Số loại / Model code — ví dụ: LANCER, CARNIVAL, FORTUNER, XPANDER...",
+  "brand": "Nhãn hiệu — chỉ tên hãng: KIA, TOYOTA, HONDA, MITSUBISHI...",
+  "model": "Số loại / Model code — ví dụ: LANCER, CARNIVAL, FORTUNER...",
   "plate": "Biển số đăng ký — ví dụ: 14A-534.01",
-  "chassis": "Số khung — chuỗi 17 ký tự chữ và số (VIN), thường ở cuối trang",
+  "chassis": "Số khung — SAO CHÉP CHÍNH XÁC, có thể 6-17 ký tự (xe cũ chỉ 6-8 ký tự như F4004323)",
   "engine": "Số máy",
-  "year": "Năm sản xuất — 4 chữ số",
-  "country": "Nước sản xuất — ví dụ: Việt Nam, Nhật Bản, Hàn Quốc, Thái Lan",
-  "transport": "Có hoặc Không (dựa vào mục đích sử dụng: kinh doanh vận tải)",
+  "year": "Năm sản xuất 4 chữ số — null nếu không có trường này trong tài liệu",
+  "country": "Nước sản xuất — null nếu không có trường này",
+  "transport": "Có hoặc Không (kinh doanh vận tải)",
   "seats": "Số chỗ ngồi — chỉ ghi số"
 }
 
-Lưu ý bắt buộc:
-- KHÔNG đưa tên trường (nhãn) vào giá trị. Ví dụ SAI: "owner": "TÊN CHỦ XE: NGUYEN A" → ĐÚNG: "owner": "NGUYEN A"
-- Số khung (chassis) thường gồm 17 ký tự, sửa lỗi OCR: I→1, O→0, S→5 nếu cần
-- Nếu không đọc được trường nào thì để null
-- Chỉ trả về JSON, không giải thích thêm`;
+Lưu ý:
+- KHÔNG đưa nhãn trường vào giá trị: SAI "TÊN CHỦ XE: NGUYEN A" → ĐÚNG "NGUYEN A"
+- Số khung: SAO CHÉP NGUYÊN VĂN từ ảnh, KHÔNG thêm/bớt ký tự, KHÔNG giả định phải 17 ký tự
+- Nếu trường không tồn tại trong tài liệu hoặc bị che khuất: trả về null
+- Chỉ trả về JSON, không giải thích`;
 
   // Gemini 3.x GA (6/2026); 2.5 giữ làm fallback phòng quota
   const MODELS = [
