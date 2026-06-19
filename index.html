@@ -2273,9 +2273,10 @@ function parseOCRText(text) {
   }
 
   // ── Số khung (VIN 17 ký tự) ──────────────────────────────────────────────
-  // Label pattern: "Số khung" / "Chassis No" + OCR variants của ố → 6/0/8/b
-  // Cho phép VIN xuất hiện trên dòng tiếp theo sau nhãn (multiline)
-  const chassisPat = /(?:s[oố06b8]\s*khung|số\s*khung|chassis\s*(?:n[o°º0]\.?|number)?)[:\s).('"]*\n?\s*([A-Z0-9][\sA-Z0-9]{13,22})/i;
+  // Giấy đăng ký VN: "Số khung (Chassis No.): VALUE" — phần "(Chassis No.)"
+  // phải được bỏ qua riêng; nếu để trong separator [:\s)(.]* sẽ bắt nhầm
+  // "Chassis" làm giá trị VIN rồi fail length check.
+  const chassisPat = /(?:s[oố06b8]\s*khung|số\s*khung|chassis\s*(?:n[o°º0]\.?|number)?)(?:\s*\([^)\n]{0,40}\))?\s*[:\s]*\n?\s*([A-Z0-9][\sA-Z0-9]{13,22})/i;
   let chassisVal = null;
   const cm = text.match(chassisPat);
   if (cm) {
