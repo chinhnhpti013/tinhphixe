@@ -902,6 +902,7 @@ select option { background: var(--surface2); }
             <div id="ocrZoneSub" class="ocr-sub">Chọn nhiều file cùng lúc hoặc kéo thả đồng thời · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> để dán từ clipboard</div>
             <div class="ocr-btns" onclick="event.stopPropagation()">
               <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
+              <button class="btn btn-ghost btn-sm" onclick="setGeminiKey()" title="Cài Gemini API Key">🔑 API Key</button>
             </div>
           </div>
           <!-- PREVIEW STRIP -->
@@ -1621,26 +1622,39 @@ function toggleBS(code) {
 }
 
 // ============================================================
-// CLAUDE VISION API — đọc ảnh bằng AI multimodal
+// GEMINI VISION API — đọc ảnh bằng AI multimodal
 // ============================================================
 function getApiKey() {
-  return localStorage.getItem('pti_anthropic_key') || '';
+  return localStorage.getItem('pti_gemini_key') || '';
 }
 
-// UI nhập key đã bỏ từ v1.4.0 — key (nếu muốn) đặt thủ công qua DevTools:
-// localStorage.setItem('pti_anthropic_key', 'sk-ant-...')
+// Đặt Gemini API key qua nút 🔑 hoặc DevTools:
+// localStorage.setItem('pti_gemini_key', 'AIza...')
+function setGeminiKey() {
+  const current = getApiKey();
+  const key = prompt('Nhập Gemini API Key (bỏ trống để xóa):', current);
+  if (key === null) return;
+  if (key.trim()) {
+    localStorage.setItem('pti_gemini_key', key.trim());
+    toast('Đã lưu Gemini API Key', 'ok');
+  } else {
+    localStorage.removeItem('pti_gemini_key');
+    toast('Đã xóa key — dùng OCR Tesseract', 'warn');
+  }
+  updateOcrZoneBadge();
+}
+
 function updateOcrZoneBadge() {
   const sub = $('ocrZoneSub');
   if (!sub) return;
   if (getApiKey()) {
-    sub.innerHTML = '✨ <strong style="color:var(--accent)">Claude Vision đang hoạt động</strong> — nhận dạng chính xác tiếng Việt · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> dán từ clipboard';
+    sub.innerHTML = '✨ <strong style="color:var(--accent)">Gemini Vision đang hoạt động</strong> — nhận dạng chính xác tiếng Việt · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> dán từ clipboard';
   } else {
     sub.innerHTML = '🧠 <strong style="color:var(--primary)">OCR thông minh 2 lượt</strong> — chạy ngay trên máy, không cần API key · tự sửa lỗi VIN, lọc nhiễu · <kbd style="background:var(--surface3);padding:1px 5px;border-radius:3px;font-size: 14px">Ctrl+V</kbd> dán từ clipboard';
   }
 }
 
-async function ocrWithClaude(dataURL, apiKey) {
-  // Chuyển dataURL sang base64 thuần (bỏ phần header "data:image/...;base64,")
+async function ocrWithGemini(dataURL, apiKey) {
   const [header, b64] = dataURL.split(',');
   const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
 
@@ -1667,39 +1681,32 @@ Quy tắc:
 - Số khung phải đúng 17 ký tự, sửa lỗi OCR nếu cần (I→1, O→0, Q→0)
 - Trả về JSON hợp lệ, không markdown, không giải thích`;
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
-          { type: 'text', text: prompt }
+      contents: [{
+        parts: [
+          { inlineData: { mimeType: mediaType, data: b64 } },
+          { text: prompt }
         ]
-      }]
+      }],
+      generationConfig: { maxOutputTokens: 512, temperature: 0 }
     }),
     signal: AbortSignal.timeout(30000)
   });
 
   if (!resp.ok) {
     const err = await resp.text();
-    throw new Error(`Claude API error ${resp.status}: ${err}`);
+    throw new Error(`Gemini API error ${resp.status}: ${err}`);
   }
 
   const data = await resp.json();
-  const content = data.content?.[0]?.text || '';
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-  // Parse JSON từ response
   const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('Claude không trả về JSON hợp lệ');
+  if (!jsonMatch) throw new Error('Gemini không trả về JSON hợp lệ');
   const parsed = JSON.parse(jsonMatch[0]);
 
   // Map sang format extracted của app
@@ -2003,8 +2010,8 @@ async function processOCRFiles(files) {
   wrap.classList.add('show');
   $('ocrResultTags').innerHTML = '';
   const apiKey = getApiKey();
-  const useClaudeVision = !!apiKey;
-  setOCRProgress(0, useClaudeVision ? 'Chuẩn bị gửi ảnh đến Claude Vision...' : 'Chuẩn bị OCR (Tesseract)...');
+  const useGeminiVision = !!apiKey;
+  setOCRProgress(0, useGeminiVision ? 'Chuẩn bị gửi ảnh đến Gemini Vision...' : 'Chuẩn bị OCR (Tesseract)...');
 
   let merged = {};
   let lastError = null;
@@ -2022,11 +2029,11 @@ async function processOCRFiles(files) {
     try {
       let extracted = {};
 
-      if (useClaudeVision) {
-        // ── Claude Vision API (chính xác hơn) ──────────────────────────────
-        setOCRProgress(pct0 + 10, `Ảnh ${i+1}/${files.length}: gửi đến Claude Vision...`);
-        extracted = await ocrWithClaude(previews[i], apiKey);
-        setOCRProgress(pct1 - 5, `Ảnh ${i+1}/${files.length}: nhận kết quả Claude...`);
+      if (useGeminiVision) {
+        // ── Gemini Vision API (chính xác hơn) ─────────────────────────────
+        setOCRProgress(pct0 + 10, `Ảnh ${i+1}/${files.length}: gửi đến Gemini Vision...`);
+        extracted = await ocrWithGemini(previews[i], apiKey);
+        setOCRProgress(pct1 - 5, `Ảnh ${i+1}/${files.length}: nhận kết quả Gemini...`);
       } else {
         // ── OCR thông minh không cần API key: best-of-2 passes ─────────────
         // Tesseract được lazy-load bên trong ocrSmart (loadTesseract)
@@ -2526,6 +2533,7 @@ function resetOCRZone() {
     <div id="ocrZoneSub" class="ocr-sub"></div>
     <div class="ocr-btns" onclick="event.stopPropagation()">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ocrFileInput').click()">📂 Chọn file (nhiều)</button>
+      <button class="btn btn-ghost btn-sm" onclick="setGeminiKey()" title="Cài Gemini API Key">🔑 API Key</button>
     </div>
   `;
   updateOcrZoneBadge();
@@ -3391,6 +3399,14 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', t);
   $('themeIcon').textContent = t === 'dark' ? '☀️' : '🌙';
   updateOcrZoneBadge();
+  // Auto-load Gemini key từ .env (hoạt động khi mở qua HTTP server, không qua file://)
+  fetch('.env').then(r => r.ok ? r.text() : '').then(text => {
+    const m = text.match(/GEMINI_API_KEY=([^\r\n]+)/);
+    if (m && m[1].trim()) {
+      localStorage.setItem('pti_gemini_key', m[1].trim());
+      updateOcrZoneBadge();
+    }
+  }).catch(() => {});
   // Cập nhật label checkbox kinh doanh vận tải
   $('f_transport').addEventListener('change', function() {
     $('f_transport_label').textContent = this.checked ? 'Có kinh doanh vận tải' : 'Không kinh doanh vận tải';
