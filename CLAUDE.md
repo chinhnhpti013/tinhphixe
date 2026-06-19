@@ -50,8 +50,8 @@ bsEffective()        — Tỷ lệ BS theo TUỔI XE + LOẠI XE, phủ đủ 17
                        · BS09 PHỤ PHÍ CỐ ĐỊNH ₫ (= tỷ lệ × 500k/ngày): type 8/9/10 = 649.000₫,
                          type 1/2/4/5/7 = 852.500₫, loại khác chặn
                        · BS13/BS27 = 0% + note "cộng giá trị thiết bị vào Số tiền BH"
-                       · BS01/BS08/BS11/BS19 chặn "trình TCT" (Mục 5); BS14/BS15/BS17/BS25
-                         chặn "không có biểu phí trong Phụ lục 01"
+                       · BS01/BS08/BS11/BS19 (Mục 5) + BS14/BS15/BS17/BS25: xe DƯỚI 6 năm bán
+                         bình thường theo tỷ lệ r; chỉ chặn "trình TCT" khi xe TỪ 6 năm (6–<10 hoặc 10–15)
 bsSelected           — Set<string> lưu mã BS đang được chọn (không dùng checkbox)
 calculate()          — Engine tính phí: làm tròn nghìn ₫, VAT 10%, cảnh báo nghiệp vụ
                        (xe >15 năm, KDVT lệch loại xe, STBH ≥5 tỷ), so sánh 4 mức khấu trừ
@@ -158,7 +158,7 @@ Nhóm A = xe con/van/pickup/taxi CN/xe con KDVT/Demo (type 1,2,11,12,14); nhóm 
 - BS07 chỉ áp dụng xe mới 100% (tuổi < 1 năm), xe cũ bị loại + cảnh báo
 - BS09: phụ phí CỐ ĐỊNH ₫ cộng vào phí gốc (không phải % giá trị xe), hiện dòng riêng trong breakdown
 - BS13/BS27: 0% + cảnh báo nhắc cộng giá trị thiết bị lắp thêm vào Số tiền BH
-- BS01/BS08/BS11/BS14/BS15/BS17/BS19/BS25: chặn (trình TCT / không có biểu phí), card hiện "Trình TCT"
+- BS01/BS08/BS11/BS14/BS15/BS17/BS19/BS25: xe dưới 6 năm bán bình thường; xe từ 6 năm (6–<10 hoặc 10–15) chặn trình TCT, card hiện "Trình TCT"
 - Xe KDVT/taxi (type 5/7/11/12/13 hoặc checkbox KDVT) ≥10 năm: ngoài biểu phí, cảnh báo trình TCT
 - Card BS render lại khi đổi Loại xe hoặc Năm sản xuất (tỷ lệ phụ thuộc cả hai)
 

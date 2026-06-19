@@ -1213,7 +1213,7 @@ select option { background: var(--surface2); }
 
       <!-- HERO -->
       <div class="result-hero result-animate">
-        <div class="rh-label">💰 PHÍ BẢO HIỂM CUỐI CÙNG</div>
+        <div class="rh-label">💰 PHÍ BẢO HIỂM (đã gồm VAT 10%)</div>
         <div class="rh-value" id="r_final">--</div>
         <div class="rh-note" id="r_note">--</div>
       </div>
@@ -1424,6 +1424,8 @@ const BS = [
 // Phí BS phụ thuộc THỜI GIAN SỬ DỤNG XE và LOẠI XE — theo Phụ lục 01 biểu phí VCX 10.2025:
 // BS02 tăng dần theo tuổi (mọi loại xe); BS05/BS26 chia 2 nhóm loại xe và tăng theo tuổi,
 // xe 10–15 năm phải trình TCT; taxi mào không bán BS05; BS07 chỉ áp dụng xe mới 100%.
+// BS01/BS08/BS11/BS19 + BS14/BS15/BS17/BS25: xe dưới 6 năm bán bình thường, chỉ trình TCT khi
+// xe từ 6 năm (6–<10 hoặc 10–15).
 // Trả về {r} hoặc {blocked: lý do}.
 function bsEffective(code, baseR, age, typeId) {
   const t = parseInt(typeId) || 0;
@@ -1474,10 +1476,13 @@ function bsEffective(code, baseR, age, typeId) {
       return { r: 0, note: 'không tính phụ phí — phải CỘNG giá trị thiết bị lắp thêm vào Số tiền bảo hiểm' };
     case 'BS27': // đầu kéo lắp hệ thống thủy lực — đơn vị chủ động, không phụ phí
       return { r: 0, note: 'không tính phụ phí — phải CỘNG giá trị hệ thống thủy lực vào Số tiền bảo hiểm' };
+    // Nhóm BS chỉ trình TCT khi xe từ 6 năm (6–<10 hoặc 10–15); xe dưới 6 năm bán bình thường theo tỷ lệ r
     case 'BS01': case 'BS08': case 'BS11': case 'BS19': // Mục 5 Phụ lục 01
-      return { blocked: 'điều khoản phải trình Tổng Công ty' };
-    case 'BS14': case 'BS15': case 'BS17': case 'BS25': // không có biểu phí trong Phụ lục 01
-      return { blocked: 'không có biểu phí trong Phụ lục 01 — trình TCT' };
+      if (age < 6) return { r: baseR };
+      return { blocked: 'xe từ 6 năm — điều khoản phải trình Tổng Công ty phê duyệt' };
+    case 'BS14': case 'BS15': case 'BS17': case 'BS25': // không có biểu phí riêng trong Phụ lục 01
+      if (age < 6) return { r: baseR };
+      return { blocked: 'xe từ 6 năm — điều khoản phải trình Tổng Công ty phê duyệt' };
     default:
       return { r: baseR };
   }
@@ -1552,9 +1557,7 @@ function copySummary() {
     `Số tiền BH:     ${fmt(v.value)}`,
     `Thời hạn:       ${v.dur} tháng`,
     `Tỷ lệ phí:      ${v.rate.toFixed(2)}%`,
-    `Phí bảo hiểm:   ${fmt(v.finalFee)}`,
-    `VAT 10%:        ${fmt(v.vat)}`,
-    `TỔNG THANH TOÁN: ${fmt(v.feeWithVat)}`,
+    `TỔNG THANH TOÁN (gồm VAT 10%): ${fmt(v.finalFee)}`,
     '─────────────────────────────',
     `Ngày tính: ${v.date}`,
   ];
@@ -1571,10 +1574,9 @@ function exportHistoryCSV() {
   if (!h.length) { toast('Chưa có lịch sử để xuất', 'warn'); return; }
   const esc = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
   const rows = [
-    ['Ngày tính','Biển số','Chủ xe','Hãng','Model','Năm SX','Loại xe','Số tiền BH (₫)','Tỷ lệ phí (%)','Phí sàn (₫)','Phí BH (₫)','VAT (₫)','Tổng gồm VAT (₫)'],
+    ['Ngày tính','Biển số','Chủ xe','Hãng','Model','Năm SX','Loại xe','Số tiền BH (₫)','Tỷ lệ phí (%)','Phí sàn (₫)','Tổng thanh toán gồm VAT 10% (₫)'],
     ...h.map(r => [r.date, r.plate, r.owner, r.brand, r.model, r.year, r.type,
-      Math.round(r.value), r.rate.toFixed(2), Math.round(r.floorFee), Math.round(r.finalFee),
-      Math.round(r.vat || 0), Math.round(r.feeWithVat || r.finalFee)]),
+      Math.round(r.value), r.rate.toFixed(2), Math.round(r.floorFee), Math.round(r.finalFee)]),
   ];
   const csv = '﻿' + rows.map(r => r.map(esc).join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -3222,10 +3224,6 @@ function _calc() {
     const hitFloor = durFee < floorFee;
     const totalAdjPct = Math.round((factor * renewFactor - 1) * 100);
 
-    // VAT 10%
-    const vat = Math.round(finalFee * 0.10);
-    const feeWithVat = finalFee + vat;
-
     // So sánh các mức khấu trừ — giữ nguyên mọi thông số khác
     const feeForDeduct = df => {
       let fee = baseFee * factorExclDeduct * df;
@@ -3251,8 +3249,7 @@ function _calc() {
 
     // ===== RENDER =====
     $('r_final').textContent = fmt(finalFee);
-    $('r_note').innerHTML  = (hitFloor ? `⚠️ Áp dụng phí sàn (phí tính = ${fmt(durFee)})` : `${dur} tháng · ${typeData.n}`)
-      + ` &nbsp;·&nbsp; <strong style="color:var(--accent)">Gồm VAT 10%: ${fmt(feeWithVat)}</strong>`;
+    $('r_note').innerHTML  = hitFloor ? `⚠️ Áp dụng phí sàn (phí tính = ${fmt(durFee)})` : `${dur} tháng · ${typeData.n}`;
     $('r_rate').textContent  = totalRate.toFixed(2) + '%';
     $('r_adj').textContent   = (totalAdjPct >= 0 ? '+' : '') + totalAdjPct + '%';
     $('r_floor').textContent = fmtM(floorFee) + '₫';
@@ -3297,14 +3294,9 @@ function _calc() {
     if (hitFloor) {
       html += `<div class="alert alert-warn" style="margin:7px 0;font-size: 15px">⚠️ Phí tính được thấp hơn phí sàn. Áp dụng phí sàn tối thiểu.</div>`;
     }
-    html += `<div class="bd-item final-row">
-      <span class="bd-label" style="font-weight:700;font-size: 18px;color:var(--text)">💰 PHÍ BẢO HIỂM (chưa VAT)</span>
-      <span class="bd-val big">${fmt(finalFee)}</span>
-    </div>`;
-    html += bdRow('Thuế GTGT (VAT 10%)', '+' + fmt(vat), 'pos');
     html += `<div class="bd-item final-row" style="background:linear-gradient(135deg,rgba(0,229,180,0.14),rgba(77,159,255,0.08));border-color:rgba(0,229,180,0.35)">
-      <span class="bd-label" style="font-weight:700;font-size: 18px;color:var(--text)">🧾 TỔNG THANH TOÁN (gồm VAT)</span>
-      <span class="bd-val big" style="color:var(--accent)">${fmt(feeWithVat)}</span>
+      <span class="bd-label" style="font-weight:700;font-size: 18px;color:var(--text)">💰 TỔNG THANH TOÁN (đã gồm VAT 10%)</span>
+      <span class="bd-val big" style="color:var(--accent)">${fmt(finalFee)}</span>
     </div>`;
 
     $('r_breakdown').innerHTML = html;
@@ -3325,7 +3317,7 @@ function _calc() {
             <span class="bd-val ${cur ? 'big' : 'neutral'}">${fmt(fee)}</span>
           </span>
         </div>`;
-      }).join('') + `<div style="font-size: 14px;color:var(--text-muted);margin-top:6px">So sánh phí (chưa VAT) khi đổi mức khấu trừ, mọi thông số khác giữ nguyên · đã áp phí sàn ${fmt(floorFee)}</div>`;
+      }).join('') + `<div style="font-size: 14px;color:var(--text-muted);margin-top:6px">So sánh phí (đã gồm VAT 10%) khi đổi mức khấu trừ, mọi thông số khác giữ nguyên · đã áp phí sàn ${fmt(floorFee)}</div>`;
     }
 
     // SUMMARY
@@ -3339,8 +3331,7 @@ function _calc() {
       ['Thời hạn', dur + ' tháng'],
       ['Tỷ lệ phí', totalRate.toFixed(2) + '%'],
       ['Phí sàn', fmt(floorFee)],
-      ['Phí bảo hiểm', fmt(finalFee)],
-      ['Tổng gồm VAT 10%', fmt(feeWithVat)],
+      ['Tổng thanh toán (gồm VAT 10%)', fmt(finalFee)],
     ].map(([l,v]) => `
       <div class="vinfo-item">
         <div class="vinfo-lab">${l}</div>
@@ -3352,7 +3343,7 @@ function _calc() {
       plate:$('f_plate').value||'--', owner:$('f_owner').value||'--',
       brand:$('f_brand').value||'--', model:$('f_model').value||'--',
       year:yearVal, type:typeData.n, value, dur, rate:totalRate,
-      baseFee, durFee, floorFee, finalFee, vat, feeWithVat,
+      baseFee, durFee, floorFee, finalFee,
       date:new Date().toLocaleString('vi-VN')
     };
 
