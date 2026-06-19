@@ -1689,8 +1689,13 @@ Lưu ý bắt buộc:
 - Nếu không đọc được trường nào thì để null
 - Chỉ trả về JSON, không giải thích thêm`;
 
-  // Thử lần lượt các model — free tier: 1.5-flash (1500 req/ngày), 2.0-flash-lite (1500/ngày)
-  const MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
+  // Thử lần lượt — v1=stable (1.5), v1beta=preview (2.0); fallback khi 429/404
+  const MODELS = [
+    { m: 'gemini-1.5-flash',      v: 'v1'     },
+    { m: 'gemini-1.5-flash-latest', v: 'v1beta' },
+    { m: 'gemini-2.0-flash-lite', v: 'v1beta' },
+    { m: 'gemini-2.0-flash',      v: 'v1beta' },
+  ];
   const body = JSON.stringify({
     contents: [{ parts: [
       { inlineData: { mimeType: mediaType, data: b64 } },
@@ -1699,9 +1704,9 @@ Lưu ý bắt buộc:
     generationConfig: { maxOutputTokens: 512, temperature: 0 }
   });
 
-  let resp, lastErr;
-  for (const model of MODELS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  let resp;
+  for (const { m, v } of MODELS) {
+    const url = `https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent?key=${apiKey}`;
     resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1709,8 +1714,8 @@ Lưu ý bắt buộc:
       signal: AbortSignal.timeout(30000)
     });
     if (resp.ok) break;
-    lastErr = `${model} → ${resp.status}`;
-    if (resp.status !== 429) break; // chỉ fallback khi quota
+    const s = resp.status;
+    if (s !== 429 && s !== 404) break; // 401/403: sai key → dừng ngay
   }
 
   if (!resp.ok) {
