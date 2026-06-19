@@ -1658,28 +1658,36 @@ async function ocrWithGemini(dataURL, apiKey) {
   const [header, b64] = dataURL.split(',');
   const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
 
-  const prompt = `Bạn đang xem ảnh Giấy đăng ký xe hoặc Giấy chứng nhận kiểm định an toàn kỹ thuật của Việt Nam.
+  const prompt = `Đây là ảnh GIẤY ĐĂNG KÝ XE hoặc GIẤY CHỨNG NHẬN KIỂM ĐỊNH của Việt Nam.
 
-Hãy trích xuất CHÍNH XÁC các thông tin sau và trả về JSON (chỉ JSON, không thêm gì khác):
+Tài liệu có dạng bảng 2 cột: CỘT TRÁI là tên trường (nhãn), CỘT PHẢI là GIÁ TRỊ cần lấy.
+QUAN TRỌNG: Chỉ lấy GIÁ TRỊ ở cột phải, KHÔNG lấy tên trường ở cột trái.
 
+Ví dụ cấu trúc:
+  "Tên chủ xe / Name of owner"  →  "NGUYEN VAN A"          ← lấy cái này
+  "Nhãn hiệu / Mark"            →  "TOYOTA"                ← lấy cái này
+  "Số khung / Chassis No."      →  "MH8AW3200M8035712"     ← lấy cái này
+
+Trả về JSON (chỉ JSON thuần, không markdown):
 {
-  "owner": "Tên chủ xe / tên công ty đầy đủ (in hoa)",
+  "owner": "Tên chủ xe hoặc tên công ty — chỉ lấy phần sau dấu ':' hoặc cột giá trị",
   "addr": "Địa chỉ đầy đủ",
-  "brand": "Nhãn hiệu xe (chỉ tên hãng: KIA, TOYOTA, HONDA...)",
-  "model": "Số loại / Model code (VD: CARNIVAL, FORTUNER...)",
-  "plate": "Biển số đăng ký (VD: 14H-042.80)",
-  "chassis": "Số khung 17 ký tự VIN",
+  "brand": "Nhãn hiệu xe — chỉ tên hãng viết tắt: KIA, TOYOTA, HONDA, MITSUBISHI...",
+  "model": "Số loại / Model code — ví dụ: LANCER, CARNIVAL, FORTUNER, XPANDER...",
+  "plate": "Biển số đăng ký — ví dụ: 14A-534.01",
+  "chassis": "Số khung — chuỗi 17 ký tự chữ và số (VIN), thường ở cuối trang",
   "engine": "Số máy",
-  "year": "Năm sản xuất (4 chữ số)",
-  "country": "Nước sản xuất (VD: Việt Nam, Hàn Quốc)",
-  "transport": "Có hoặc Không (kinh doanh vận tải)",
-  "seats": "Số chỗ ngồi (chỉ số)"
+  "year": "Năm sản xuất — 4 chữ số",
+  "country": "Nước sản xuất — ví dụ: Việt Nam, Nhật Bản, Hàn Quốc, Thái Lan",
+  "transport": "Có hoặc Không (dựa vào mục đích sử dụng: kinh doanh vận tải)",
+  "seats": "Số chỗ ngồi — chỉ ghi số"
 }
 
-Quy tắc:
-- Nếu không tìm thấy trường nào, để giá trị là null
-- Số khung phải đúng 17 ký tự, sửa lỗi OCR nếu cần (I→1, O→0, Q→0)
-- Trả về JSON hợp lệ, không markdown, không giải thích`;
+Lưu ý bắt buộc:
+- KHÔNG đưa tên trường (nhãn) vào giá trị. Ví dụ SAI: "owner": "TÊN CHỦ XE: NGUYEN A" → ĐÚNG: "owner": "NGUYEN A"
+- Số khung (chassis) thường gồm 17 ký tự, sửa lỗi OCR: I→1, O→0, S→5 nếu cần
+- Nếu không đọc được trường nào thì để null
+- Chỉ trả về JSON, không giải thích thêm`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
   const resp = await fetch(url, {
