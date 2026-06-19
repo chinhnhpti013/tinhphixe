@@ -1749,7 +1749,7 @@ Lưu ý:
   if (parsed.plate)     extracted.plate   = String(parsed.plate).toUpperCase().trim();
   if (parsed.chassis) {
     const vin = correctVIN(String(parsed.chassis).replace(/\s/g,'').toUpperCase());
-    if (vin.length >= 15) extracted.chassis = vin.substring(0,17);
+    if (vin.length >= 4) extracted.chassis = vin.substring(0,17); // xe cũ có thể chỉ 6-8 ký tự
   }
   if (parsed.engine)    extracted.engine  = String(parsed.engine).toUpperCase().trim();
   if (parsed.year)      extracted.year    = String(parsed.year).replace(/\D/g,'').substring(0,4);
